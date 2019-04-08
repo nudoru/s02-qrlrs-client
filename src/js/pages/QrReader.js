@@ -7,22 +7,18 @@ import jsQR from 'jsqr';
 
 /*
 // Source from https://cozmo.github.io/jsQR/
-var video = document.createElement("video");
-var canvasElement = document.getElementById("canvas");
-var canvas = canvasElement.getContext("2d");
-var loadingMessage = document.getElementById("loadingMessage");
-var outputContainer = document.getElementById("output");
-var outputMessage = document.getElementById("outputMessage");
-var outputData = document.getElementById("outputData");
+// https://github.com/cozmo/jsQR
 */
+
+const OUTLINE_COLOR = `#FF3B58`;
 
 export default class QrReader extends NoriComponent {
 
-  // Subclasses should only take passed props and children
   constructor(props) {
     super(props);
-  }
 
+    this.state = {code:null};
+  }
 
   componentDidMount = () => {
     this.video = document.createElement("video");
@@ -68,13 +64,15 @@ export default class QrReader extends NoriComponent {
       });
 
       if (code) {
-        this.drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
-        this.drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
-        this.drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
-        this.drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+        this.drawLine(code.location.topLeftCorner, code.location.topRightCorner, OUTLINE_COLOR);
+        this.drawLine(code.location.topRightCorner, code.location.bottomRightCorner, OUTLINE_COLOR);
+        this.drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, OUTLINE_COLOR);
+        this.drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, OUTLINE_COLOR);
         this.outputMessage.hidden = true;
         this.outputData.parentElement.hidden = false;
         this.outputData.innerText = code.data;
+        console.log(code);
+        this.state ={code: code.data};
       } else {
         this.outputMessage.hidden = false;
         this.outputData.parentElement.hidden = true;
@@ -82,19 +80,6 @@ export default class QrReader extends NoriComponent {
     }
     requestAnimationFrame(this.tick);
   };
-
-  componentWillUnmount = () => {
-    //console.log('Greet will remove');
-  };
-
-  componentWillUpdate = () => {
-    //console.log('Greet will update', this.state.name);
-  };
-
-  componentDidUpdate = () => {
-    // console.log('Greet did update');
-  };
-
 
   render() {
     return (<div>

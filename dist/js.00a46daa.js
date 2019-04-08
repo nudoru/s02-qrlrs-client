@@ -54110,20 +54110,15 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 /*
 // Source from https://cozmo.github.io/jsQR/
-var video = document.createElement("video");
-var canvasElement = document.getElementById("canvas");
-var canvas = canvasElement.getContext("2d");
-var loadingMessage = document.getElementById("loadingMessage");
-var outputContainer = document.getElementById("output");
-var outputMessage = document.getElementById("outputMessage");
-var outputData = document.getElementById("outputData");
+// https://github.com/cozmo/jsQR
 */
+var OUTLINE_COLOR = "#FF3B58";
+
 var QrReader =
 /*#__PURE__*/
 function (_NoriComponent) {
   (0, _inherits2.default)(QrReader, _NoriComponent);
 
-  // Subclasses should only take passed props and children
   function QrReader(props) {
     var _this;
 
@@ -54184,17 +54179,21 @@ function (_NoriComponent) {
         });
 
         if (code) {
-          _this.drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+          _this.drawLine(code.location.topLeftCorner, code.location.topRightCorner, OUTLINE_COLOR);
 
-          _this.drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+          _this.drawLine(code.location.topRightCorner, code.location.bottomRightCorner, OUTLINE_COLOR);
 
-          _this.drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+          _this.drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, OUTLINE_COLOR);
 
-          _this.drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+          _this.drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, OUTLINE_COLOR);
 
           _this.outputMessage.hidden = true;
           _this.outputData.parentElement.hidden = false;
           _this.outputData.innerText = code.data;
+          console.log(code);
+          _this.state = {
+            code: code.data
+          };
         } else {
           _this.outputMessage.hidden = false;
           _this.outputData.parentElement.hidden = true;
@@ -54203,12 +54202,9 @@ function (_NoriComponent) {
 
       requestAnimationFrame(_this.tick);
     });
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "componentWillUnmount", function () {//console.log('Greet will remove');
-    });
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "componentWillUpdate", function () {//console.log('Greet will update', this.state.name);
-    });
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "componentDidUpdate", function () {// console.log('Greet did update');
-    });
+    _this.state = {
+      code: null
+    };
     return _this;
   }
 
