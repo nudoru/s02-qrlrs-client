@@ -41597,7 +41597,9 @@ var reconcileChildFunctions = function reconcileChildFunctions(vnode) {
       resultIndex = [],
       index = 0;
   children = children.map(function (child, i) {
-    if (typeof child === 'function') {
+    if (child === null || child === undefined) {
+      return '';
+    } else if (typeof child === 'function') {
       // Render fn as child
       var childResult;
 
@@ -41626,7 +41628,7 @@ var reconcileChildFunctions = function reconcileChildFunctions(vnode) {
       });
       result.unshift(childResult);
       resultIndex.unshift(i);
-    } else if ((0, _typeof2.default)(child.type) === 'object') {
+    } else if (child.hasOwnProperty('type') && (0, _typeof2.default)(child.type) === 'object') {
       // Occurs when a fn that returns JSX is used as a component in a component
       child = child.type;
     } //Not needed : else {child = reconcile(child);}
@@ -54112,7 +54114,45 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // Source from https://cozmo.github.io/jsQR/
 // https://github.com/cozmo/jsQR
 */
-var OUTLINE_COLOR = "#FF3B58";
+var initializeMediaStream = function initializeMediaStream(videoObj, tickFn) {
+  // Use facingMode: environment to attempt to get the front camera on phones
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: "environment"
+    }
+  }).then(function (stream) {
+    videoObj.srcObject = stream;
+    videoObj.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+
+    videoObj.play();
+    requestAnimationFrame(tickFn);
+  });
+};
+
+var getCodeFromCanvasFrame = function getCodeFromCanvasFrame(canvasObj, canvasEl) {
+  var imageData = canvasObj.getImageData(0, 0, canvasEl.width, canvasEl.height);
+  var code = (0, _jsqr.default)(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "dontInvert"
+  });
+  return code ? code : null;
+};
+
+var outlineCodeInFrame = function outlineCodeInFrame(canvasObj, code) {
+  var OUTLINE_COLOR = "#FF3B58";
+  drawLine(canvasObj, code.location.topLeftCorner, code.location.topRightCorner, OUTLINE_COLOR);
+  drawLine(canvasObj, code.location.topRightCorner, code.location.bottomRightCorner, OUTLINE_COLOR);
+  drawLine(canvasObj, code.location.bottomRightCorner, code.location.bottomLeftCorner, OUTLINE_COLOR);
+  drawLine(canvasObj, code.location.bottomLeftCorner, code.location.topLeftCorner, OUTLINE_COLOR);
+};
+
+var drawLine = function drawLine(canvasEl, begin, end, color) {
+  canvasEl.beginPath();
+  canvasEl.moveTo(begin.x, begin.y);
+  canvasEl.lineTo(end.x, end.y);
+  canvasEl.lineWidth = 4;
+  canvasEl.strokeStyle = color;
+  canvasEl.stroke();
+};
 
 var QrReader =
 /*#__PURE__*/
@@ -54129,78 +54169,31 @@ function (_NoriComponent) {
       _this.canvasElement = document.getElementById("canvas");
       _this.canvas = _this.canvasElement.getContext("2d");
       _this.loadingMessage = document.getElementById("loadingMessage");
-      _this.outputContainer = document.getElementById("output");
-      _this.outputMessage = document.getElementById("outputMessage");
-      _this.outputData = document.getElementById("outputData"); // Use facingMode: environment to attempt to get the front camera on phones
-
-      navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment"
-        }
-      }).then(function (stream) {
-        _this.video.srcObject = stream;
-
-        _this.video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
-
-
-        _this.video.play();
-
-        requestAnimationFrame(_this.tick);
-      });
+      _this.outputData = document.getElementById("outputData");
+      initializeMediaStream(_this.video, _this.handleVideoFrame);
     });
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "drawLine", function (begin, end, color) {
-      _this.canvas.beginPath();
-
-      _this.canvas.moveTo(begin.x, begin.y);
-
-      _this.canvas.lineTo(end.x, end.y);
-
-      _this.canvas.lineWidth = 4;
-      _this.canvas.strokeStyle = color;
-
-      _this.canvas.stroke();
-    });
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "tick", function (_) {
-      _this.loadingMessage.innerText = "⌛ Loading video...";
+    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "handleVideoFrame", function (_) {
+      _this.loadingMessage.innerText = "Starting video...";
 
       if (_this.video.readyState === _this.video.HAVE_ENOUGH_DATA) {
         _this.loadingMessage.hidden = true;
         _this.canvasElement.hidden = false;
-        _this.outputContainer.hidden = false;
         _this.canvasElement.height = _this.video.videoHeight;
         _this.canvasElement.width = _this.video.videoWidth;
 
         _this.canvas.drawImage(_this.video, 0, 0, _this.canvasElement.width, _this.canvasElement.height);
 
-        var imageData = _this.canvas.getImageData(0, 0, _this.canvasElement.width, _this.canvasElement.height);
+        var data = getCodeFromCanvasFrame(_this.canvas, _this.canvasElement);
 
-        var code = (0, _jsqr.default)(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert"
-        });
-
-        if (code) {
-          _this.drawLine(code.location.topLeftCorner, code.location.topRightCorner, OUTLINE_COLOR);
-
-          _this.drawLine(code.location.topRightCorner, code.location.bottomRightCorner, OUTLINE_COLOR);
-
-          _this.drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, OUTLINE_COLOR);
-
-          _this.drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, OUTLINE_COLOR);
-
-          _this.outputMessage.hidden = true;
-          _this.outputData.parentElement.hidden = false;
-          _this.outputData.innerText = code.data;
-          console.log(code);
+        if (data) {
+          outlineCodeInFrame(_this.canvas, data);
           _this.state = {
-            code: code.data
+            code: data.data
           };
-        } else {
-          _this.outputMessage.hidden = false;
-          _this.outputData.parentElement.hidden = true;
         }
       }
 
-      requestAnimationFrame(_this.tick);
+      requestAnimationFrame(_this.handleVideoFrame);
     });
     _this.state = {
       code: null
@@ -54213,19 +54206,13 @@ function (_NoriComponent) {
     value: function render() {
       return (0, _Nori.h)("div", null, (0, _Nori.h)("div", {
         id: "loadingMessage"
-      }, "\uD83C\uDFA5 Unable to access video stream (please make sure you have a webcam enabled)"), (0, _Nori.h)("canvas", {
-        id: "canvas",
-        hidden: true
+      }, "Unable to access device video."), (0, _Nori.h)("canvas", {
+        id: "canvas"
       }), (0, _Nori.h)("div", {
-        id: "output",
-        hidden: true
-      }, (0, _Nori.h)("div", {
-        id: "outputMessage"
-      }, "No QR code detected."), (0, _Nori.h)("div", {
-        hidden: true
-      }, (0, _Nori.h)("b", null, "Data:"), " ", (0, _Nori.h)("span", {
+        id: "output"
+      }, (0, _Nori.h)("h1", {
         id: "outputData"
-      }))));
+      }, this.state.code)));
     }
   }]);
   return QrReader;

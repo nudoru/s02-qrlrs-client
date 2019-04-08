@@ -10,13 +10,46 @@ import jsQR from 'jsqr';
 // https://github.com/cozmo/jsQR
 */
 
-const OUTLINE_COLOR = `#FF3B58`;
+const initializeMediaStream = (videoObj, tickFn) => {
+  // Use facingMode: environment to attempt to get the front camera on phones
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
+    videoObj.srcObject = stream;
+    videoObj.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+    videoObj.play();
+    requestAnimationFrame(tickFn);
+  });
+};
+
+const getCodeFromCanvasFrame = (canvasObj, canvasEl) => {
+  let imageData = canvasObj.getImageData(0, 0, canvasEl.width, canvasEl.height);
+  let code = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "dontInvert",
+  });
+
+  return code ? code : null;
+};
+
+const outlineCodeInFrame = (canvasObj, code) => {
+  const OUTLINE_COLOR = `#FF3B58`;
+  drawLine(canvasObj, code.location.topLeftCorner, code.location.topRightCorner, OUTLINE_COLOR);
+  drawLine(canvasObj, code.location.topRightCorner, code.location.bottomRightCorner, OUTLINE_COLOR);
+  drawLine(canvasObj, code.location.bottomRightCorner, code.location.bottomLeftCorner, OUTLINE_COLOR);
+  drawLine(canvasObj, code.location.bottomLeftCorner, code.location.topLeftCorner, OUTLINE_COLOR);
+};
+
+const drawLine = (canvasEl, begin, end, color) => {
+  canvasEl.beginPath();
+  canvasEl.moveTo(begin.x, begin.y);
+  canvasEl.lineTo(end.x, end.y);
+  canvasEl.lineWidth = 4;
+  canvasEl.strokeStyle = color;
+  canvasEl.stroke();
+};
 
 export default class QrReader extends NoriComponent {
 
   constructor(props) {
     super(props);
-
     this.state = {code:null};
   }
 
@@ -25,71 +58,39 @@ export default class QrReader extends NoriComponent {
     this.canvasElement = document.getElementById("canvas");
     this.canvas = this.canvasElement.getContext("2d");
     this.loadingMessage = document.getElementById("loadingMessage");
-    this.outputContainer = document.getElementById("output");
-    this.outputMessage = document.getElementById("outputMessage");
     this.outputData = document.getElementById("outputData");
 
-    // Use facingMode: environment to attempt to get the front camera on phones
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
-      this.video.srcObject = stream;
-      this.video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
-      this.video.play();
-      requestAnimationFrame(this.tick);
-    });
+    initializeMediaStream(this.video, this.handleVideoFrame);
   };
 
-  drawLine = (begin, end, color) => {
-    this.canvas.beginPath();
-    this.canvas.moveTo(begin.x, begin.y);
-    this.canvas.lineTo(end.x, end.y);
-    this.canvas.lineWidth = 4;
-    this.canvas.strokeStyle = color;
-    this.canvas.stroke();
-  };
-
-  tick = _ => {
-    this.loadingMessage.innerText = "⌛ Loading video...";
+  handleVideoFrame = _ => {
+    this.loadingMessage.innerText = "Starting video...";
     if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
       this.loadingMessage.hidden = true;
       this.canvasElement.hidden = false;
-      this.outputContainer.hidden = false;
-
       this.canvasElement.height = this.video.videoHeight;
       this.canvasElement.width = this.video.videoWidth;
       this.canvas.drawImage(this.video, 0, 0, this.canvasElement.width, this.canvasElement.height);
 
-      let imageData = this.canvas.getImageData(0, 0, this.canvasElement.width, this.canvasElement.height);
-      let code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
-      });
+      const data = getCodeFromCanvasFrame(this.canvas, this.canvasElement);
 
-      if (code) {
-        this.drawLine(code.location.topLeftCorner, code.location.topRightCorner, OUTLINE_COLOR);
-        this.drawLine(code.location.topRightCorner, code.location.bottomRightCorner, OUTLINE_COLOR);
-        this.drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, OUTLINE_COLOR);
-        this.drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, OUTLINE_COLOR);
-        this.outputMessage.hidden = true;
-        this.outputData.parentElement.hidden = false;
-        this.outputData.innerText = code.data;
-        console.log(code);
-        this.state ={code: code.data};
-      } else {
-        this.outputMessage.hidden = false;
-        this.outputData.parentElement.hidden = true;
+      if(data) {
+        outlineCodeInFrame(this.canvas, data);
+        this.state ={code: data.data};
       }
+
     }
-    requestAnimationFrame(this.tick);
+    requestAnimationFrame(this.handleVideoFrame);
   };
+
+
 
   render() {
     return (<div>
-      <div id="loadingMessage">🎥 Unable to access video stream (please make
-        sure you have a webcam enabled)
-      </div>
-      <canvas id="canvas" hidden/>
-      <div id="output" hidden>
-        <div id="outputMessage">No QR code detected.</div>
-        <div hidden><b>Data:</b> <span id="outputData"></span></div>
+      <div id="loadingMessage">Unable to access device video.</div>
+      <canvas id="canvas"/>
+      <div id="output">
+        <h1 id="outputData">{this.state.code}</h1>
       </div>
     </div>)
   }

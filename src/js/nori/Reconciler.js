@@ -102,7 +102,9 @@ const reconcileChildFunctions = vnode => {
       resultIndex = [],
       index       = 0;
   children        = children.map((child, i) => {
-    if (typeof child === 'function') {
+    if(child === null || child === undefined) {
+      return '';
+    } else if (typeof child === 'function') {
       // Render fn as child
       let childResult;
       try {
@@ -129,7 +131,7 @@ const reconcileChildFunctions = vnode => {
       });
       result.unshift(childResult);
       resultIndex.unshift(i);
-    } else if (typeof child.type === 'object') {
+    } else if (child.hasOwnProperty('type') && typeof child.type === 'object') {
       // Occurs when a fn that returns JSX is used as a component in a component
       child = child.type;
     } //Not needed : else {child = reconcile(child);}
