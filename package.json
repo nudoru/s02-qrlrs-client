@@ -33,6 +33,7 @@
     "gh-pages": "^1.2.0",
     "gsap": "^2.0.2",
     "immutable": "^4.0.0-rc.12",
+    "jsqr": "^1.2.0",
     "lodash": "^4.17.11",
     "node-sass": "^4.9.0",
     "parcel-bundler": "^1.12.3",

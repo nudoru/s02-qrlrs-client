@@ -6,7 +6,7 @@ import {removeAllElements} from "./browser/DOMToolbox";
 import is from './util/is';
 
 const ID_KEY        = 'data-nori-id';
-const SHOW_ID_KEYS  = false;
+const SHOW_ID_KEYS  = true;
 const isEvent       = event => /^on/.test(event);
 const getEventName  = event => event.slice(2).toLowerCase();
 // "Special props should be updated as new props are added to components.
@@ -243,11 +243,11 @@ const applyProp = ($element, key, value) => {
       value = convertStylePropObjToHTML(value);
     } else if (key === 'className') {
       key = 'class';
-    } else if (key === 'id') {
-      if (!SHOW_ID_KEYS) {
-        return;
-      }
-      key = ID_KEY;
+    //}// else if (key === 'id') {
+      //if (!SHOW_ID_KEYS) {
+      //  return;
+      //}
+      //key = ID_KEY;
     } else if (key === 'key') {
       if (!value) {
         return;
@@ -291,9 +291,9 @@ const removeProp = ($element, key, value) => {
   if (!isSpecialProp(key)) {
     if (key === 'className') {
       key = 'class';
-    } else if (key === 'id') {
-      key = 'data-nid';
-    }
+    }// else if (key === 'id') {
+      //key = 'data-nid';
+    //}
     if (typeof value === 'boolean') {
       removeBooleanProp($element, key);
     } else {
