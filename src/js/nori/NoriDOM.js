@@ -10,7 +10,7 @@ const SHOW_ID_KEYS  = true;
 const isEvent       = event => /^on/.test(event);
 const getEventName  = event => event.slice(2).toLowerCase();
 // "Special props should be updated as new props are added to components.
-const specialProps  = ['tweens', 'state', 'actions', 'children', 'element', 'min', 'max', 'mode', 'context','ref']; // TODO move this to another file
+const specialProps  = ['tweens', 'state', 'actions', 'children', 'element', 'min', 'max', 'mode', 'context']; // TODO move this to another file
 const isSpecialProp = test => specialProps.includes(test);
 
 let _eventMap            = {},
@@ -243,11 +243,11 @@ const applyProp = ($element, key, value) => {
       value = convertStylePropObjToHTML(value);
     } else if (key === 'className') {
       key = 'class';
-    //}// else if (key === 'id') {
-      //if (!SHOW_ID_KEYS) {
+    } else if (key === 'id') {
+      // if (!SHOW_ID_KEYS) {
       //  return;
-      //}
-      //key = ID_KEY;
+      // }
+      // key = ID_KEY;
     } else if (key === 'key') {
       if (!value) {
         return;
