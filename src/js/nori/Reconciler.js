@@ -7,6 +7,7 @@ import {performPostRenderHookCleanup} from "./LifecycleQueue";
 import {removeEvents} from "./NoriDOM";
 import {unregisterHooks} from "./Hooks";
 import {Consumer, Provider} from './Context';
+import {repeatStr} from "./util/StringUtils";
 
 let _componentInstanceMap        = {},
     _currentVnode,
@@ -40,8 +41,8 @@ export const reconcileTree = vnode => {
 // Need a persistant index because this fn is called at several places
 const reconcile = (vnode, index = 0) => {
   setCurrentVnode(vnode);
-  // let indent = repeatStr('\t',index);
-  // console.log(indent,index,vnode);
+  let indent = repeatStr('\t',index);
+  //console.log(indent,index,vnode);
   if (index <= _currentContextProviderIndex) {
     _currentContextProvider = null;
   }
@@ -62,7 +63,14 @@ const reconcile = (vnode, index = 0) => {
     } else if (isConsumer(vnode)) {
       console.warn(`Use of a context consumer outside the scope of a provider.`)
     }
+
+    // TODO this needs more testing
+    if(isTypeFunction(vnode)) {
+      console.log(indent,index,'fn node returns a fn', vnode);
+      vnode = reconcile(vnode, index)
+    }
   }
+
   //return reconcileChildren(vnode, reconcile);
   if (vnode.hasOwnProperty('children') && vnode.children.length) {
     ++index; //added for context / depth tracking

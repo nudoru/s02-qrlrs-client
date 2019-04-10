@@ -41415,7 +41415,116 @@ function (_NoriComponent2) {
 }(_NoriComponent3.default);
 
 exports.Consumer = Consumer;
-},{"@babel/runtime/helpers/classCallCheck":"../node_modules/@babel/runtime/helpers/classCallCheck.js","@babel/runtime/helpers/createClass":"../node_modules/@babel/runtime/helpers/createClass.js","@babel/runtime/helpers/possibleConstructorReturn":"../node_modules/@babel/runtime/helpers/possibleConstructorReturn.js","@babel/runtime/helpers/getPrototypeOf":"../node_modules/@babel/runtime/helpers/getPrototypeOf.js","@babel/runtime/helpers/assertThisInitialized":"../node_modules/@babel/runtime/helpers/assertThisInitialized.js","@babel/runtime/helpers/inherits":"../node_modules/@babel/runtime/helpers/inherits.js","@babel/runtime/helpers/defineProperty":"../node_modules/@babel/runtime/helpers/defineProperty.js","./NoriComponent":"js/nori/NoriComponent.js","./Nori":"js/nori/Nori.js","./util/ElementIDCreator":"js/nori/util/ElementIDCreator.js"}],"js/nori/Reconciler.js":[function(require,module,exports) {
+},{"@babel/runtime/helpers/classCallCheck":"../node_modules/@babel/runtime/helpers/classCallCheck.js","@babel/runtime/helpers/createClass":"../node_modules/@babel/runtime/helpers/createClass.js","@babel/runtime/helpers/possibleConstructorReturn":"../node_modules/@babel/runtime/helpers/possibleConstructorReturn.js","@babel/runtime/helpers/getPrototypeOf":"../node_modules/@babel/runtime/helpers/getPrototypeOf.js","@babel/runtime/helpers/assertThisInitialized":"../node_modules/@babel/runtime/helpers/assertThisInitialized.js","@babel/runtime/helpers/inherits":"../node_modules/@babel/runtime/helpers/inherits.js","@babel/runtime/helpers/defineProperty":"../node_modules/@babel/runtime/helpers/defineProperty.js","./NoriComponent":"js/nori/NoriComponent.js","./Nori":"js/nori/Nori.js","./util/ElementIDCreator":"js/nori/util/ElementIDCreator.js"}],"js/nori/util/StringUtils.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.unslugify = exports.slugify = exports.removeWhiteSpace = exports.DOMtoCSSStyle = exports.dasherize = exports.underscore = exports.capitalize = exports.unescapeHTML = exports.removeEntities = exports.removeTags = exports.ellipses = exports.toTitleCase = exports.capitalizeFirstLetter = exports.repeatStr = void 0;
+
+var _ArrayUtils = require("./ArrayUtils");
+
+var _this = void 0;
+
+var repeatStr = function repeatStr(str, num) {
+  return (0, _ArrayUtils.range)(num).map(function (n) {
+    return str;
+  }).join('');
+};
+
+exports.repeatStr = repeatStr;
+
+var capitalizeFirstLetter = function capitalizeFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.substring(1);
+};
+
+exports.capitalizeFirstLetter = capitalizeFirstLetter;
+
+var toTitleCase = function toTitleCase(str) {
+  return str.replace(/\w\S*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1);
+  });
+};
+
+exports.toTitleCase = toTitleCase;
+
+var ellipses = function ellipses(len) {
+  return _this.length > len ? _this.substr(0, len) + "..." : _this;
+}; // From https://github.com/sstephenson/prototype/blob/d9411e5/src/prototype/lang/string.js#L426
+// export const removeTags2 = (str) => {
+//   return str.replace(/<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi, '');
+// };
+
+
+exports.ellipses = ellipses;
+
+var removeTags = function removeTags(str) {
+  return str.replace(/(<([^>]+)>)/ig, '');
+};
+
+exports.removeTags = removeTags;
+
+var removeEntities = function removeEntities(str) {
+  return str.replace(/(&(#?)(?:[a-z\d]+|#\d+|#x[a-f\d]+);)/ig, '');
+}; // From https://github.com/sstephenson/prototype/blob/d9411e5/src/prototype/lang/string.js#L426
+
+
+exports.removeEntities = removeEntities;
+
+var unescapeHTML = function unescapeHTML(str) {
+  // Warning: In 1.7 String#unescapeHTML will no longer call String#stripTags.
+  return removeTags(str).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+};
+
+exports.unescapeHTML = unescapeHTML;
+
+var capitalize = function capitalize(str) {
+  return str.charAt(0).toUpperCase() + _this.substring(1).toLowerCase();
+};
+
+exports.capitalize = capitalize;
+
+var underscore = function underscore(str) {
+  return str.replace(/::/g, '/').replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2').replace(/([a-z\d])([A-Z])/g, '$1_$2').replace(/-/g, '_').toLowerCase();
+};
+
+exports.underscore = underscore;
+
+var dasherize = function dasherize(str) {
+  return str.replace(/_/g, '-');
+};
+
+exports.dasherize = dasherize;
+
+var DOMtoCSSStyle = function DOMtoCSSStyle(str) {
+  return dasherize(underscore(str));
+};
+
+exports.DOMtoCSSStyle = DOMtoCSSStyle;
+
+var removeWhiteSpace = function removeWhiteSpace(str) {
+  return str.replace(/(\r\n|\n|\r|\t|\s)/gm, '').replace(/>\s+</g, '><');
+};
+
+exports.removeWhiteSpace = removeWhiteSpace;
+
+var slugify = function slugify(str) {
+  return str.split(' ').map(function (s) {
+    return s.toLowerCase();
+  }).join('_');
+};
+
+exports.slugify = slugify;
+
+var unslugify = function unslugify(str) {
+  return str.split('_').map(function (s) {
+    return s.charAt(0).toUpperCase() + s.substring(1);
+  }).join(' ');
+};
+
+exports.unslugify = unslugify;
+},{"./ArrayUtils":"js/nori/util/ArrayUtils.js"}],"js/nori/Reconciler.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41444,6 +41553,8 @@ var _NoriDOM = require("./NoriDOM");
 var _Hooks = require("./Hooks");
 
 var _Context = require("./Context");
+
+var _StringUtils = require("./util/StringUtils");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -41520,8 +41631,8 @@ exports.reconcileTree = reconcileTree;
 
 var reconcile = function reconcile(vnode) {
   var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  setCurrentVnode(vnode); // let indent = repeatStr('\t',index);
-  // console.log(indent,index,vnode);
+  setCurrentVnode(vnode);
+  var indent = (0, _StringUtils.repeatStr)('\t', index); //console.log(indent,index,vnode);
 
   if (index <= _currentContextProviderIndex) {
     _currentContextProvider = null;
@@ -41546,6 +41657,12 @@ var reconcile = function reconcile(vnode) {
       _currentContextProvider.addConsumer(vnode);
     } else if (isConsumer(vnode)) {
       console.warn("Use of a context consumer outside the scope of a provider.");
+    } // TODO this needs more testing
+
+
+    if ((0, _Nori.isTypeFunction)(vnode)) {
+      console.log(indent, index, 'fn node returns a fn', vnode);
+      vnode = reconcile(vnode, index);
     }
   } //return reconcileChildren(vnode, reconcile);
 
@@ -41773,7 +41890,7 @@ const changed = (newNode, oldNode) => {
 
 
 exports.removeComponentInstance = removeComponentInstance;
-},{"@babel/runtime/helpers/toConsumableArray":"../node_modules/@babel/runtime/helpers/toConsumableArray.js","@babel/runtime/helpers/typeof":"../node_modules/@babel/runtime/helpers/typeof.js","ramda":"../node_modules/ramda/es/index.js","./util/is":"js/nori/util/is.js","./util/ElementIDCreator":"js/nori/util/ElementIDCreator.js","./Nori":"js/nori/Nori.js","lodash":"../node_modules/lodash/lodash.js","./LifecycleQueue":"js/nori/LifecycleQueue.js","./NoriDOM":"js/nori/NoriDOM.js","./Hooks":"js/nori/Hooks.js","./Context":"js/nori/Context.js"}],"js/nori/browser/DOMToolbox.js":[function(require,module,exports) {
+},{"@babel/runtime/helpers/toConsumableArray":"../node_modules/@babel/runtime/helpers/toConsumableArray.js","@babel/runtime/helpers/typeof":"../node_modules/@babel/runtime/helpers/typeof.js","ramda":"../node_modules/ramda/es/index.js","./util/is":"js/nori/util/is.js","./util/ElementIDCreator":"js/nori/util/ElementIDCreator.js","./Nori":"js/nori/Nori.js","lodash":"../node_modules/lodash/lodash.js","./LifecycleQueue":"js/nori/LifecycleQueue.js","./NoriDOM":"js/nori/NoriDOM.js","./Hooks":"js/nori/Hooks.js","./Context":"js/nori/Context.js","./util/StringUtils":"js/nori/util/StringUtils.js"}],"js/nori/browser/DOMToolbox.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -42189,6 +42306,7 @@ var paint = function paint($element, newvdom, currentvdom) {
     // console.log('Replace', currentvdom,'vs',newvdom, $element.childNodes[index],'with',$newElement);
 
 
+    (0, _Reconciler.removeComponentInstance)(currentvdom);
     $element.replaceChild(_$newElement, $element.childNodes[index]);
     patches.push({
       type: 'REPLACE',
@@ -42690,7 +42808,14 @@ var VideoSteam = function VideoSteam(props) {
       canvasContext,
       videoEl = (0, _Hooks.useRef)(null),
       canvasEl = (0, _Hooks.useRef)(null),
-      onFrameCallback = props.onFrameCallback;
+      lastFrame,
+      onFrameCallback = props.onFrameCallback,
+      play = props.play;
+
+  if (play === undefined) {
+    play = true;
+  }
+
   (0, _Hooks.useEffect)(function () {
     canvasContext = canvasEl.current.getContext('2d');
     navigator.mediaDevices.getUserMedia({
@@ -42702,13 +42827,17 @@ var VideoSteam = function VideoSteam(props) {
       videoEl.current.srcObject = stream;
       videoEl.current.setAttribute("playsinline", PLAY_INLINE); // required to tell iOS safari we don't want fullscreen
 
-      var autoPlayPromise = videoEl.current.play(); // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
+      if (play) {
+        var autoPlayPromise = videoEl.current.play(); // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
 
-      if (autoPlayPromise !== undefined) {
-        autoPlayPromise.then(function (_) {// Autoplay started!
-        }).catch(function (error) {// Autoplay was prevented.
-          // Show a "Play" button so that user can start playback.
-        });
+        if (autoPlayPromise !== undefined) {
+          autoPlayPromise.then(function (_) {// Autoplay started!
+          }).catch(function (error) {// Autoplay was prevented.
+            // Show a "Play" button so that user can start playback.
+          });
+        }
+      } else {
+        videoEl.current.pause();
       }
 
       currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);
@@ -42719,20 +42848,23 @@ var VideoSteam = function VideoSteam(props) {
       //loopVideo = false;
       //videoEl.current.pause();
       cancelAnimationFrame(currentAnimationRequestId);
+      lastFrame = null;
     };
   }, []);
 
   var handleVideoFrame = function handleVideoFrame(_) {
-    if (videoEl.current.readyState === videoEl.current.HAVE_ENOUGH_DATA) {
+    if (videoEl.current.readyState === videoEl.current.HAVE_ENOUGH_DATA && play) {
       var vW = videoEl.current.videoWidth,
           vH = videoEl.current.videoHeight;
       canvasEl.current.width = vW;
       canvasEl.current.height = vH;
-      canvasContext.drawImage(videoEl.current, 0, 0, vW, vH);
+      lastFrame = videoEl.current;
+      canvasContext.drawImage(lastFrame, 0, 0, vW, vH);
 
       if (typeof onFrameCallback === 'function') {
         onFrameCallback(canvasEl.current, canvasContext);
       }
+    } else if (!play) {//
     }
 
     if (loopVideo) {
@@ -42757,23 +42889,23 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.drawLine = exports.drawPoly = void 0;
 
-var drawPoly = function drawPoly(canvasObj, coords) {
+var drawPoly = function drawPoly(context, coords) {
   var OUTLINE_COLOR = "#FF3B58";
-  drawLine(canvasObj, coords.topLeftCorner, coords.topRightCorner, OUTLINE_COLOR);
-  drawLine(canvasObj, coords.topRightCorner, coords.bottomRightCorner, OUTLINE_COLOR);
-  drawLine(canvasObj, coords.bottomRightCorner, coords.bottomLeftCorner, OUTLINE_COLOR);
-  drawLine(canvasObj, coords.bottomLeftCorner, coords.topLeftCorner, OUTLINE_COLOR);
+  drawLine(context, coords.topLeftCorner, coords.topRightCorner, OUTLINE_COLOR);
+  drawLine(context, coords.topRightCorner, coords.bottomRightCorner, OUTLINE_COLOR);
+  drawLine(context, coords.bottomRightCorner, coords.bottomLeftCorner, OUTLINE_COLOR);
+  drawLine(context, coords.bottomLeftCorner, coords.topLeftCorner, OUTLINE_COLOR);
 };
 
 exports.drawPoly = drawPoly;
 
-var drawLine = function drawLine(canvasEl, begin, end, color) {
-  canvasEl.beginPath();
-  canvasEl.moveTo(begin.x, begin.y);
-  canvasEl.lineTo(end.x, end.y);
-  canvasEl.lineWidth = 4;
-  canvasEl.strokeStyle = color;
-  canvasEl.stroke();
+var drawLine = function drawLine(context, begin, end, color) {
+  context.beginPath();
+  context.moveTo(begin.x, begin.y);
+  context.lineTo(end.x, end.y);
+  context.lineWidth = 10;
+  context.strokeStyle = color;
+  context.stroke();
 };
 
 exports.drawLine = drawLine;
@@ -52821,41 +52953,27 @@ exports.locate = locate;
 /***/ })
 /******/ ])["default"];
 });
-},{}],"js/pages/QrReader.js":[function(require,module,exports) {
+},{}],"js/components/QrReader.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.QrReader = void 0;
 
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
-
-var _possibleConstructorReturn2 = _interopRequireDefault(require("@babel/runtime/helpers/possibleConstructorReturn"));
-
-var _getPrototypeOf2 = _interopRequireDefault(require("@babel/runtime/helpers/getPrototypeOf"));
-
-var _assertThisInitialized2 = _interopRequireDefault(require("@babel/runtime/helpers/assertThisInitialized"));
-
-var _inherits2 = _interopRequireDefault(require("@babel/runtime/helpers/inherits"));
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _NoriComponent2 = _interopRequireDefault(require("../nori/NoriComponent"));
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
 
 var _Nori = require("../nori/Nori");
 
+var _lodash = _interopRequireDefault(require("lodash"));
+
 var _Hooks = require("../nori/Hooks");
 
-var _VideoStream = require("../components/VideoStream");
+var _VideoStream = require("./VideoStream");
 
 var _CanvasUtils = require("../nori/util/CanvasUtils");
 
 var _jsqr = _interopRequireDefault(require("jsqr"));
-
-var _lodash = _interopRequireDefault(require("lodash"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -52865,59 +52983,90 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // Source from https://cozmo.github.io/jsQR/
 // https://github.com/cozmo/jsQR
 */
-var QrReader =
-/*#__PURE__*/
-function (_NoriComponent) {
-  (0, _inherits2.default)(QrReader, _NoriComponent);
+var QrReader = function QrReader(props) {
+  var _useState = (0, _Hooks.useState)({
+    code: null
+  }),
+      _useState2 = (0, _slicedToArray2.default)(_useState, 2),
+      data = _useState2[0],
+      setData = _useState2[1],
+      hasData = data.code !== null ? true : false,
+      onErrorCallback = props.onErrorCallback,
+      onReadCallback = props.onReadCallback;
 
-  function QrReader(props) {
-    var _this;
-
-    (0, _classCallCheck2.default)(this, QrReader);
-    _this = (0, _possibleConstructorReturn2.default)(this, (0, _getPrototypeOf2.default)(QrReader).call(this, props)); // todo useState
-
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "componentDidMount", function () {});
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "getCodeFromCanvasFrame", function (canvasContext, canvasEl) {
-      var imageData = canvasContext.getImageData(0, 0, canvasEl.width, canvasEl.height);
-      var code = (0, _jsqr.default)(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert"
-      });
-      return code ? code : null;
+  var getCodeFromCanvasFrame = function getCodeFromCanvasFrame(canvasContext, canvasEl) {
+    var imageData = canvasContext.getImageData(0, 0, canvasEl.width, canvasEl.height);
+    var code = (0, _jsqr.default)(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "dontInvert"
     });
-    (0, _defineProperty2.default)((0, _assertThisInitialized2.default)(_this), "processVideoFrame", function (canvasEl, canvasContext) {
-      var data = _this.getCodeFromCanvasFrame(canvasContext, canvasEl);
+    return code ? code : null;
+  };
 
-      if (data) {
-        (0, _CanvasUtils.drawPoly)(canvasContext, data.location);
-        _this.state = {
-          code: data
-        };
+  var processVideoFrame = function processVideoFrame(canvasEl, canvasContext) {
+    var data = getCodeFromCanvasFrame(canvasContext, canvasEl);
+
+    if (data) {
+      (0, _CanvasUtils.drawPoly)(canvasContext, data.location);
+
+      try {
+        var json = JSON.parse(data.data);
+        console.log("Read data from code:", json); //setData({code: json});
+
+        if (typeof onReadCallback === 'function') {
+          onReadCallback(json);
+        }
+      } catch (err) {
+        console.warn("Couldn't parse code to JSON : ", data.data);
+
+        if (typeof onErrorCallback === 'function') {
+          onErrorCallback(err, data.data);
+        }
       }
-    });
-    _this.state = {
-      code: null
-    };
-    return _this;
-  }
-
-  (0, _createClass2.default)(QrReader, [{
-    key: "render",
-    value: function render() {
-      var data = this.state.code !== null && this.state.code.hasOwnProperty('data') ? this.state.code.data : '';
-      return (0, _Nori.h)("div", null, (0, _Nori.h)(_VideoStream.VideoSteam, {
-        onFrameCallback: _lodash.default.throttle(this.processVideoFrame, 20)
-      }), (0, _Nori.h)("div", {
-        id: "output"
-      }, (0, _Nori.h)("h1", {
-        id: "outputData"
-      }, data)));
     }
-  }]);
-  return QrReader;
-}(_NoriComponent2.default);
+  };
 
-exports.default = QrReader;
-},{"@babel/runtime/helpers/classCallCheck":"../node_modules/@babel/runtime/helpers/classCallCheck.js","@babel/runtime/helpers/createClass":"../node_modules/@babel/runtime/helpers/createClass.js","@babel/runtime/helpers/possibleConstructorReturn":"../node_modules/@babel/runtime/helpers/possibleConstructorReturn.js","@babel/runtime/helpers/getPrototypeOf":"../node_modules/@babel/runtime/helpers/getPrototypeOf.js","@babel/runtime/helpers/assertThisInitialized":"../node_modules/@babel/runtime/helpers/assertThisInitialized.js","@babel/runtime/helpers/inherits":"../node_modules/@babel/runtime/helpers/inherits.js","@babel/runtime/helpers/defineProperty":"../node_modules/@babel/runtime/helpers/defineProperty.js","../nori/NoriComponent":"js/nori/NoriComponent.js","../nori/Nori":"js/nori/Nori.js","../nori/Hooks":"js/nori/Hooks.js","../components/VideoStream":"js/components/VideoStream.js","../nori/util/CanvasUtils":"js/nori/util/CanvasUtils.js","jsqr":"../node_modules/jsqr/dist/jsQR.js","lodash":"../node_modules/lodash/lodash.js"}],"../node_modules/@babel/runtime/helpers/taggedTemplateLiteral.js":[function(require,module,exports) {
+  return (0, _Nori.h)("div", null, function () {
+    if (hasData) {
+      return (0, _Nori.h)("p", null, JSON.stringify(data.code));
+    } else {
+      return (0, _Nori.h)(_VideoStream.VideoSteam, {
+        onFrameCallback: _lodash.default.throttle(processVideoFrame, 10)
+      });
+    }
+  });
+};
+
+exports.QrReader = QrReader;
+},{"@babel/runtime/helpers/slicedToArray":"../node_modules/@babel/runtime/helpers/slicedToArray.js","../nori/Nori":"js/nori/Nori.js","lodash":"../node_modules/lodash/lodash.js","../nori/Hooks":"js/nori/Hooks.js","./VideoStream":"js/components/VideoStream.js","../nori/util/CanvasUtils":"js/nori/util/CanvasUtils.js","jsqr":"../node_modules/jsqr/dist/jsQR.js"}],"js/pages/ReaderPage.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ReaderPage = void 0;
+
+var _Nori = require("../nori/Nori");
+
+var _QrReader = require("../components/QrReader");
+
+/* @jsx h */
+var ReaderPage = function ReaderPage(props) {
+  var onErrorFn = function onErrorFn(err, data) {
+    console.warn("Didn't read the code", err, data);
+  };
+
+  var onReadFn = function onReadFn(data) {
+    console.log("I see the code!", data);
+  };
+
+  return (0, _Nori.h)(_QrReader.QrReader, {
+    onReadCallback: onReadFn,
+    onErrorCallback: onErrorFn
+  });
+};
+
+exports.ReaderPage = ReaderPage;
+},{"../nori/Nori":"js/nori/Nori.js","../components/QrReader":"js/components/QrReader.js"}],"../node_modules/@babel/runtime/helpers/taggedTemplateLiteral.js":[function(require,module,exports) {
 function _taggedTemplateLiteral(strings, raw) {
   if (!raw) {
     raw = strings.slice(0);
@@ -54432,15 +54581,18 @@ var _Nori = require("./nori/Nori");
 
 var _NoriDOM = require("./nori/NoriDOM");
 
-var _QrReader = _interopRequireDefault(require("./pages/QrReader"));
+var _ReaderPage = require("./pages/ReaderPage");
+
+var _QrReader = require("./components/QrReader");
 
 var _Global = _interopRequireDefault(require("./theme/Global"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /* @jsx h */
-(0, _NoriDOM.render)((0, _Nori.h)(_QrReader.default, null), document.querySelector('#js-application'));
-},{"./nori/Nori":"js/nori/Nori.js","./nori/NoriDOM":"js/nori/NoriDOM.js","./pages/QrReader":"js/pages/QrReader.js","./theme/Global":"js/theme/Global.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+// render(<ReaderPage/>, document.querySelector('#js-application'));
+(0, _NoriDOM.render)((0, _Nori.h)(_ReaderPage.ReaderPage, null), document.querySelector('#js-application'));
+},{"./nori/Nori":"js/nori/Nori.js","./nori/NoriDOM":"js/nori/NoriDOM.js","./pages/ReaderPage":"js/pages/ReaderPage.js","./components/QrReader":"js/components/QrReader.js","./theme/Global":"js/theme/Global.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

@@ -77,6 +77,7 @@ const paint = ($element, newvdom, currentvdom, index = 0, patches) => {
     const $newElement = createDOMNode(newvdom);
     //, $newElement,$element.childNodes[index]
     // console.log('Replace', currentvdom,'vs',newvdom, $element.childNodes[index],'with',$newElement);
+    removeComponentInstance(currentvdom);
     $element.replaceChild($newElement, $element.childNodes[index]);
     patches.push({
       type   : 'REPLACE',

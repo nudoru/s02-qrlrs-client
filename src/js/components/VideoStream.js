@@ -24,7 +24,12 @@ export const VideoSteam = props => {
       canvasContext,
       videoEl           = useRef(null),
       canvasEl          = useRef(null),
-      {onFrameCallback} = props;
+      lastFrame,
+      {onFrameCallback, play} = props;
+
+  if(play === undefined) {
+    play = true;
+  }
 
   useEffect(() => {
     canvasContext = canvasEl.current.getContext('2d');
@@ -36,16 +41,19 @@ export const VideoSteam = props => {
       .then(stream => {
         videoEl.current.srcObject = stream;
         videoEl.current.setAttribute("playsinline", PLAY_INLINE); // required to tell iOS safari we don't want fullscreen
-        let autoPlayPromise = videoEl.current.play();
-
-        // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
-        if (autoPlayPromise !== undefined) {
-          autoPlayPromise.then(_ => {
-            // Autoplay started!
-          }).catch(error => {
-            // Autoplay was prevented.
-            // Show a "Play" button so that user can start playback.
-          });
+        if(play) {
+          let autoPlayPromise = videoEl.current.play();
+          // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
+          if (autoPlayPromise !== undefined) {
+            autoPlayPromise.then(_ => {
+              // Autoplay started!
+            }).catch(error => {
+              // Autoplay was prevented.
+              // Show a "Play" button so that user can start playback.
+            });
+          }
+        } else {
+          videoEl.current.pause();
         }
 
         currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);
@@ -58,20 +66,24 @@ export const VideoSteam = props => {
       //loopVideo = false;
       //videoEl.current.pause();
       cancelAnimationFrame(currentAnimationRequestId);
+      lastFrame = null;
     }
   }, []);
 
   const handleVideoFrame = _ => {
-    if (videoEl.current.readyState === videoEl.current.HAVE_ENOUGH_DATA) {
+    if (videoEl.current.readyState === videoEl.current.HAVE_ENOUGH_DATA && play) {
       let vW = videoEl.current.videoWidth,
           vH = videoEl.current.videoHeight;
 
       canvasEl.current.width  = vW;
       canvasEl.current.height = vH;
-      canvasContext.drawImage(videoEl.current, 0, 0, vW, vH);
+      lastFrame = videoEl.current;
+      canvasContext.drawImage(lastFrame, 0, 0, vW, vH);
       if (typeof onFrameCallback === 'function') {
         onFrameCallback(canvasEl.current, canvasContext);
       }
+    } else if(!play) {
+      //
     }
     if (loopVideo) {
       currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);

@@ -1,16 +1,16 @@
-export const drawPoly = (canvasObj, coords) => {
+export const drawPoly = (context, coords) => {
   const OUTLINE_COLOR = `#FF3B58`;
-  drawLine(canvasObj, coords.topLeftCorner, coords.topRightCorner, OUTLINE_COLOR);
-  drawLine(canvasObj, coords.topRightCorner, coords.bottomRightCorner, OUTLINE_COLOR);
-  drawLine(canvasObj, coords.bottomRightCorner, coords.bottomLeftCorner, OUTLINE_COLOR);
-  drawLine(canvasObj, coords.bottomLeftCorner, coords.topLeftCorner, OUTLINE_COLOR);
+  drawLine(context, coords.topLeftCorner, coords.topRightCorner, OUTLINE_COLOR);
+  drawLine(context, coords.topRightCorner, coords.bottomRightCorner, OUTLINE_COLOR);
+  drawLine(context, coords.bottomRightCorner, coords.bottomLeftCorner, OUTLINE_COLOR);
+  drawLine(context, coords.bottomLeftCorner, coords.topLeftCorner, OUTLINE_COLOR);
 };
 
-export const drawLine = (canvasEl, begin, end, color) => {
-  canvasEl.beginPath();
-  canvasEl.moveTo(begin.x, begin.y);
-  canvasEl.lineTo(end.x, end.y);
-  canvasEl.lineWidth   = 4;
-  canvasEl.strokeStyle = color;
-  canvasEl.stroke();
+export const drawLine = (context, begin, end, color) => {
+  context.beginPath();
+  context.moveTo(begin.x, begin.y);
+  context.lineTo(end.x, end.y);
+  context.lineWidth   = 10;
+  context.strokeStyle = color;
+  context.stroke();
 };

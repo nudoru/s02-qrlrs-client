@@ -2,7 +2,10 @@
 
 import {h} from './nori/Nori';
 import {render} from './nori/NoriDOM';
-import QrReader from "./pages/QrReader";
+import {ReaderPage} from "./pages/ReaderPage";
+import {QrReader} from "./components/QrReader";
+
 import Theme from './theme/Global';
 
-render(<QrReader/>, document.querySelector('#js-application'));
+// render(<ReaderPage/>, document.querySelector('#js-application'));
+render(<ReaderPage/>, document.querySelector('#js-application'));
