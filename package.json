@@ -8,7 +8,7 @@
     "prestart": "rm -rf ./dist",
     "start": "parcel ./src/index.html --hmr-port 40827",
     "prebuild": "rm -rf ./dist",
-    "build": "parcel build --detailed-report ./src/index.html --out-dir ./dist --public-url ./",
+    "build": "parcel build ./src/index.html --out-dir ./dist --public-url ./ --detailed-report",
     "deploy": "gh-pages -d dist"
   },
   "author": "Matt Perkins, hello@mattperkins.me",

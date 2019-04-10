@@ -13,7 +13,7 @@ var config = {
   localRoot: __dirname + '/dist',
   remoteRoot: secrets.ftpremotedir,
   include: ['*', '**/*'],      // this would upload everything except dot files
-  exclude: ['**/*.map'],     // e.g. exclude sourcemaps - ** exclude: [] if nothing to exclude **
+  // exclude: ['**/*.map'],     // e.g. exclude sourcemaps - ** exclude: [] if nothing to exclude **
   deleteRemote: true,              // delete existing files at destination before uploading
   forcePasv: true                 // Passive mode is forced (EPSV command is not sent)
 };
