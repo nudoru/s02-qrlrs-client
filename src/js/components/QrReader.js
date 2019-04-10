@@ -4,7 +4,7 @@
 import {h} from "../nori/Nori";
 import _ from "lodash";
 import {useState} from "../nori/Hooks";
-import {VideoSteam} from "./VideoStream";
+import {CanvasVideoSteam} from "./CanvasVideoStream";
 import {drawPoly} from "../nori/util/CanvasUtils";
 import jsQR from "jsqr";
 
@@ -13,11 +13,11 @@ import jsQR from "jsqr";
 // https://github.com/cozmo/jsQR
 */
 
+const INTERVAL = 100;
+
 export const QrReader = props => {
 
-  let [data, setData]                   = useState({code: null}),
-      hasData                           = data.code !== null ? true : false,
-      {onErrorCallback, onReadCallback} = props;
+  let {onErrorCallback, onReadCallback, ...restProps} = props;
 
   const getCodeFromCanvasFrame = (canvasContext, canvasEl) => {
     let imageData = canvasContext.getImageData(0, 0, canvasEl.width, canvasEl.height);
@@ -34,7 +34,6 @@ export const QrReader = props => {
       try {
         let json = JSON.parse(data.data);
         console.log(`Read data from code:`, json);
-        //setData({code: json});
         if (typeof onReadCallback === 'function') {
           onReadCallback(json);
         }
@@ -47,15 +46,6 @@ export const QrReader = props => {
     }
   };
 
-  return (<div>
-    {() => {
-      if (hasData) {
-        return <p>{JSON.stringify(data.code)}</p>
-      } else {
-        return <VideoSteam
-          onFrameCallback={_.throttle(processVideoFrame, 10)}/>
-      }
-    }
-    }
-  </div>)
+  return (<CanvasVideoSteam
+    onFrameCallback={_.throttle(processVideoFrame, INTERVAL)}/>)
 };

@@ -42773,13 +42773,53 @@ var performUpdates = function performUpdates() {
   (0, _LifecycleQueue.performDidUpdateQueue)((0, _Reconciler.getComponentInstances)());
   _currentStage = STAGE_STEADY; // console.timeEnd('update');
 };
-},{"@babel/runtime/helpers/typeof":"../node_modules/@babel/runtime/helpers/typeof.js","./util/ArrayUtils":"js/nori/util/ArrayUtils.js","./LifecycleQueue":"js/nori/LifecycleQueue.js","./NoriDOM":"js/nori/NoriDOM.js","./NoriComponent":"js/nori/NoriComponent.js","./Reconciler":"js/nori/Reconciler.js"}],"js/components/VideoStream.js":[function(require,module,exports) {
+},{"@babel/runtime/helpers/typeof":"../node_modules/@babel/runtime/helpers/typeof.js","./util/ArrayUtils":"js/nori/util/ArrayUtils.js","./LifecycleQueue":"js/nori/LifecycleQueue.js","./NoriDOM":"js/nori/NoriDOM.js","./NoriComponent":"js/nori/NoriComponent.js","./Reconciler":"js/nori/Reconciler.js"}],"../node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js":[function(require,module,exports) {
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+
+  return target;
+}
+
+module.exports = _objectWithoutPropertiesLoose;
+},{}],"../node_modules/@babel/runtime/helpers/objectWithoutProperties.js":[function(require,module,exports) {
+var objectWithoutPropertiesLoose = require("./objectWithoutPropertiesLoose");
+
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
+  var target = objectWithoutPropertiesLoose(source, excluded);
+  var key, i;
+
+  if (Object.getOwnPropertySymbols) {
+    var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+
+    for (i = 0; i < sourceSymbolKeys.length; i++) {
+      key = sourceSymbolKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+      target[key] = source[key];
+    }
+  }
+
+  return target;
+}
+
+module.exports = _objectWithoutProperties;
+},{"./objectWithoutPropertiesLoose":"../node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js"}],"js/components/CanvasVideoStream.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.VideoSteam = void 0;
+exports.CanvasVideoSteam = void 0;
 
 var _Nori = require("../nori/Nori");
 
@@ -42799,16 +42839,16 @@ v.addEventListener("resize", ev => {
   }
 }, false);
  */
-var VideoSteam = function VideoSteam(props) {
+var INTERVAL = 150;
+
+var CanvasVideoSteam = function CanvasVideoSteam(props) {
   var FACING_MODE = 'environment'; // use mobile rear camera
 
   var PLAY_INLINE = true;
-  var loopVideo = true,
-      currentAnimationRequestId,
+  var intervalID,
       canvasContext,
       videoEl = (0, _Hooks.useRef)(null),
       canvasEl = (0, _Hooks.useRef)(null),
-      lastFrame,
       onFrameCallback = props.onFrameCallback,
       play = props.play;
 
@@ -42838,17 +42878,16 @@ var VideoSteam = function VideoSteam(props) {
         }
       } else {
         videoEl.current.pause();
-      }
+      } // intervalID = requestAnimationFrame(handleVideoFrame);
 
-      currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);
+
+      intervalID = setTimeout(handleVideoFrame, INTERVAL);
     }).catch(function (err) {
       console.warn('VideoStream error :', err);
     });
     return function () {
-      //loopVideo = false;
-      //videoEl.current.pause();
-      cancelAnimationFrame(currentAnimationRequestId);
-      lastFrame = null;
+      //cancelAnimationFrame(intervalID);
+      clearTimeout(intervalID);
     };
   }, []);
 
@@ -42858,18 +42897,16 @@ var VideoSteam = function VideoSteam(props) {
           vH = videoEl.current.videoHeight;
       canvasEl.current.width = vW;
       canvasEl.current.height = vH;
-      lastFrame = videoEl.current;
-      canvasContext.drawImage(lastFrame, 0, 0, vW, vH);
+      canvasContext.drawImage(videoEl.current, 0, 0, vW, vH);
 
       if (typeof onFrameCallback === 'function') {
         onFrameCallback(canvasEl.current, canvasContext);
       }
-    } else if (!play) {//
-    }
+    } else if (!play) {} //
+    // intervalID = requestAnimationFrame(handleVideoFrame);
 
-    if (loopVideo) {
-      currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);
-    }
+
+    intervalID = setTimeout(handleVideoFrame, INTERVAL);
   };
 
   return (0, _Nori.h)("div", null, (0, _Nori.h)("video", {
@@ -42880,7 +42917,7 @@ var VideoSteam = function VideoSteam(props) {
   }));
 };
 
-exports.VideoSteam = VideoSteam;
+exports.CanvasVideoSteam = CanvasVideoSteam;
 },{"../nori/Nori":"js/nori/Nori.js","../nori/Hooks":"js/nori/Hooks.js"}],"js/nori/util/CanvasUtils.js":[function(require,module,exports) {
 "use strict";
 
@@ -52961,7 +52998,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.QrReader = void 0;
 
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
+var _objectWithoutProperties2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutProperties"));
 
 var _Nori = require("../nori/Nori");
 
@@ -52969,7 +53006,7 @@ var _lodash = _interopRequireDefault(require("lodash"));
 
 var _Hooks = require("../nori/Hooks");
 
-var _VideoStream = require("./VideoStream");
+var _CanvasVideoStream = require("./CanvasVideoStream");
 
 var _CanvasUtils = require("../nori/util/CanvasUtils");
 
@@ -52983,16 +53020,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // Source from https://cozmo.github.io/jsQR/
 // https://github.com/cozmo/jsQR
 */
+var INTERVAL = 100;
+
 var QrReader = function QrReader(props) {
-  var _useState = (0, _Hooks.useState)({
-    code: null
-  }),
-      _useState2 = (0, _slicedToArray2.default)(_useState, 2),
-      data = _useState2[0],
-      setData = _useState2[1],
-      hasData = data.code !== null ? true : false,
-      onErrorCallback = props.onErrorCallback,
-      onReadCallback = props.onReadCallback;
+  var onErrorCallback = props.onErrorCallback,
+      onReadCallback = props.onReadCallback,
+      restProps = (0, _objectWithoutProperties2.default)(props, ["onErrorCallback", "onReadCallback"]);
 
   var getCodeFromCanvasFrame = function getCodeFromCanvasFrame(canvasContext, canvasEl) {
     var imageData = canvasContext.getImageData(0, 0, canvasEl.width, canvasEl.height);
@@ -53010,7 +53043,7 @@ var QrReader = function QrReader(props) {
 
       try {
         var json = JSON.parse(data.data);
-        console.log("Read data from code:", json); //setData({code: json});
+        console.log("Read data from code:", json);
 
         if (typeof onReadCallback === 'function') {
           onReadCallback(json);
@@ -53025,19 +53058,2018 @@ var QrReader = function QrReader(props) {
     }
   };
 
-  return (0, _Nori.h)("div", null, function () {
-    if (hasData) {
-      return (0, _Nori.h)("p", null, JSON.stringify(data.code));
-    } else {
-      return (0, _Nori.h)(_VideoStream.VideoSteam, {
-        onFrameCallback: _lodash.default.throttle(processVideoFrame, 10)
-      });
-    }
+  return (0, _Nori.h)(_CanvasVideoStream.CanvasVideoSteam, {
+    onFrameCallback: _lodash.default.throttle(processVideoFrame, INTERVAL)
   });
 };
 
 exports.QrReader = QrReader;
-},{"@babel/runtime/helpers/slicedToArray":"../node_modules/@babel/runtime/helpers/slicedToArray.js","../nori/Nori":"js/nori/Nori.js","lodash":"../node_modules/lodash/lodash.js","../nori/Hooks":"js/nori/Hooks.js","./VideoStream":"js/components/VideoStream.js","../nori/util/CanvasUtils":"js/nori/util/CanvasUtils.js","jsqr":"../node_modules/jsqr/dist/jsQR.js"}],"js/pages/ReaderPage.js":[function(require,module,exports) {
+},{"@babel/runtime/helpers/objectWithoutProperties":"../node_modules/@babel/runtime/helpers/objectWithoutProperties.js","../nori/Nori":"js/nori/Nori.js","lodash":"../node_modules/lodash/lodash.js","../nori/Hooks":"js/nori/Hooks.js","./CanvasVideoStream":"js/components/CanvasVideoStream.js","../nori/util/CanvasUtils":"js/nori/util/CanvasUtils.js","jsqr":"../node_modules/jsqr/dist/jsQR.js"}],"../node_modules/process/browser.js":[function(require,module,exports) {
+
+// shim for using process in browser
+var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+  throw new Error('setTimeout has not been defined');
+}
+
+function defaultClearTimeout() {
+  throw new Error('clearTimeout has not been defined');
+}
+
+(function () {
+  try {
+    if (typeof setTimeout === 'function') {
+      cachedSetTimeout = setTimeout;
+    } else {
+      cachedSetTimeout = defaultSetTimout;
+    }
+  } catch (e) {
+    cachedSetTimeout = defaultSetTimout;
+  }
+
+  try {
+    if (typeof clearTimeout === 'function') {
+      cachedClearTimeout = clearTimeout;
+    } else {
+      cachedClearTimeout = defaultClearTimeout;
+    }
+  } catch (e) {
+    cachedClearTimeout = defaultClearTimeout;
+  }
+})();
+
+function runTimeout(fun) {
+  if (cachedSetTimeout === setTimeout) {
+    //normal enviroments in sane situations
+    return setTimeout(fun, 0);
+  } // if setTimeout wasn't available but was latter defined
+
+
+  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+    cachedSetTimeout = setTimeout;
+    return setTimeout(fun, 0);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedSetTimeout(fun, 0);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+      return cachedSetTimeout.call(null, fun, 0);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+      return cachedSetTimeout.call(this, fun, 0);
+    }
+  }
+}
+
+function runClearTimeout(marker) {
+  if (cachedClearTimeout === clearTimeout) {
+    //normal enviroments in sane situations
+    return clearTimeout(marker);
+  } // if clearTimeout wasn't available but was latter defined
+
+
+  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+    cachedClearTimeout = clearTimeout;
+    return clearTimeout(marker);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedClearTimeout(marker);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+      return cachedClearTimeout.call(null, marker);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+      return cachedClearTimeout.call(this, marker);
+    }
+  }
+}
+
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+  if (!draining || !currentQueue) {
+    return;
+  }
+
+  draining = false;
+
+  if (currentQueue.length) {
+    queue = currentQueue.concat(queue);
+  } else {
+    queueIndex = -1;
+  }
+
+  if (queue.length) {
+    drainQueue();
+  }
+}
+
+function drainQueue() {
+  if (draining) {
+    return;
+  }
+
+  var timeout = runTimeout(cleanUpNextTick);
+  draining = true;
+  var len = queue.length;
+
+  while (len) {
+    currentQueue = queue;
+    queue = [];
+
+    while (++queueIndex < len) {
+      if (currentQueue) {
+        currentQueue[queueIndex].run();
+      }
+    }
+
+    queueIndex = -1;
+    len = queue.length;
+  }
+
+  currentQueue = null;
+  draining = false;
+  runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+  var args = new Array(arguments.length - 1);
+
+  if (arguments.length > 1) {
+    for (var i = 1; i < arguments.length; i++) {
+      args[i - 1] = arguments[i];
+    }
+  }
+
+  queue.push(new Item(fun, args));
+
+  if (queue.length === 1 && !draining) {
+    runTimeout(drainQueue);
+  }
+}; // v8 likes predictible objects
+
+
+function Item(fun, array) {
+  this.fun = fun;
+  this.array = array;
+}
+
+Item.prototype.run = function () {
+  this.fun.apply(null, this.array);
+};
+
+process.title = 'browser';
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) {
+  return [];
+};
+
+process.binding = function (name) {
+  throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () {
+  return '/';
+};
+
+process.chdir = function (dir) {
+  throw new Error('process.chdir is not supported');
+};
+
+process.umask = function () {
+  return 0;
+};
+},{}],"../node_modules/data.task/lib/task.js":[function(require,module,exports) {
+var process = require("process");
+'use strict';
+
+
+/**
+ * A helper for delaying the execution of a function.
+ * @private
+ * @summary (Any... -> Any) -> Void
+ */
+var delayed = typeof setImmediate !== 'undefined'?  setImmediate
+            : typeof process !== 'undefined'?       process.nextTick
+            : /* otherwise */                       setTimeout
+
+/**
+ * @module lib/task
+ */
+module.exports = Task;
+
+// -- Implementation ---------------------------------------------------
+
+/**
+ * The `Task[α, β]` structure represents values that depend on time. This
+ * allows one to model time-based effects explicitly, such that one can have
+ * full knowledge of when they're dealing with delayed computations, latency,
+ * or anything that can not be computed immediately.
+ *
+ * A common use for this structure is to replace the usual Continuation-Passing
+ * Style form of programming, in order to be able to compose and sequence
+ * time-dependent effects using the generic and powerful monadic operations.
+ *
+ * @class
+ * @summary
+ * ((α → Void), (β → Void) → Void), (Void → Void) → Task[α, β]
+ *
+ * Task[α, β] <: Chain[β]
+ *               , Monad[β]
+ *               , Functor[β]
+ *               , Applicative[β]
+ *               , Semigroup[β]
+ *               , Monoid[β]
+ *               , Show
+ */
+function Task(computation, cleanup) {
+  this.fork = computation;
+
+  this.cleanup = cleanup || function() {};
+}
+
+/**
+ * Constructs a new `Task[α, β]` containing the single value `β`.
+ *
+ * `β` can be any value, including `null`, `undefined`, or another
+ * `Task[α, β]` structure.
+ *
+ * @summary β → Task[α, β]
+ */
+Task.prototype.of = function _of(b) {
+  return new Task(function(_, resolve) {
+    return resolve(b);
+  });
+};
+
+Task.of = Task.prototype.of;
+
+/**
+ * Constructs a new `Task[α, β]` containing the single value `α`.
+ *
+ * `α` can be any value, including `null`, `undefined`, or another
+ * `Task[α, β]` structure.
+ *
+ * @summary α → Task[α, β]
+ */
+Task.prototype.rejected = function _rejected(a) {
+  return new Task(function(reject) {
+    return reject(a);
+  });
+};
+
+Task.rejected = Task.prototype.rejected;
+
+// -- Functor ----------------------------------------------------------
+
+/**
+ * Transforms the successful value of the `Task[α, β]` using a regular unary
+ * function.
+ *
+ * @summary @Task[α, β] => (β → γ) → Task[α, γ]
+ */
+Task.prototype.map = function _map(f) {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return reject(a);
+    }, function(b) {
+      return resolve(f(b));
+    });
+  }, cleanup);
+};
+
+// -- Chain ------------------------------------------------------------
+
+/**
+ * Transforms the succesful value of the `Task[α, β]` using a function to a
+ * monad.
+ *
+ * @summary @Task[α, β] => (β → Task[α, γ]) → Task[α, γ]
+ */
+Task.prototype.chain = function _chain(f) {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return reject(a);
+    }, function(b) {
+      return f(b).fork(reject, resolve);
+    });
+  }, cleanup);
+};
+
+// -- Apply ------------------------------------------------------------
+
+/**
+ * Applys the successful value of the `Task[α, (β → γ)]` to the successful
+ * value of the `Task[α, β]`
+ *
+ * @summary @Task[α, (β → γ)] => Task[α, β] → Task[α, γ]
+ */
+
+Task.prototype.ap = function _ap(that) {
+  var forkThis = this.fork;
+  var forkThat = that.fork;
+  var cleanupThis = this.cleanup;
+  var cleanupThat = that.cleanup;
+
+  function cleanupBoth(state) {
+    cleanupThis(state[0]);
+    cleanupThat(state[1]);
+  }
+
+  return new Task(function(reject, resolve) {
+    var func, funcLoaded = false;
+    var val, valLoaded = false;
+    var rejected = false;
+    var allState;
+
+    var thisState = forkThis(guardReject, guardResolve(function(x) {
+      funcLoaded = true;
+      func = x;
+    }));
+
+    var thatState = forkThat(guardReject, guardResolve(function(x) {
+      valLoaded = true;
+      val = x;
+    }));
+
+    function guardResolve(setter) {
+      return function(x) {
+        if (rejected) {
+          return;
+        }
+
+        setter(x);
+        if (funcLoaded && valLoaded) {
+          delayed(function(){ cleanupBoth(allState) });
+          return resolve(func(val));
+        } else {
+          return x;
+        }
+      }
+    }
+
+    function guardReject(x) {
+      if (!rejected) {
+        rejected = true;
+        return reject(x);
+      }
+    }
+
+    return allState = [thisState, thatState];
+  }, cleanupBoth);
+};
+
+// -- Semigroup ------------------------------------------------------------
+
+/**
+ * Selects the earlier of the two tasks `Task[α, β]`
+ *
+ * @summary @Task[α, β] => Task[α, β] → Task[α, β]
+ */
+
+Task.prototype.concat = function _concat(that) {
+  var forkThis = this.fork;
+  var forkThat = that.fork;
+  var cleanupThis = this.cleanup;
+  var cleanupThat = that.cleanup;
+
+  function cleanupBoth(state) {
+    cleanupThis(state[0]);
+    cleanupThat(state[1]);
+  }
+
+  return new Task(function(reject, resolve) {
+    var done = false;
+    var allState;
+    var thisState = forkThis(guard(reject), guard(resolve));
+    var thatState = forkThat(guard(reject), guard(resolve));
+
+    return allState = [thisState, thatState];
+
+    function guard(f) {
+      return function(x) {
+        if (!done) {
+          done = true;
+          delayed(function(){ cleanupBoth(allState) })
+          return f(x);
+        }
+      };
+    }
+  }, cleanupBoth);
+
+};
+
+// -- Monoid ------------------------------------------------------------
+
+/**
+ * Returns a Task that will never resolve
+ *
+ * @summary Void → Task[α, _]
+ */
+Task.empty = function _empty() {
+  return new Task(function() {});
+};
+
+Task.prototype.empty = Task.empty;
+
+// -- Show -------------------------------------------------------------
+
+/**
+ * Returns a textual representation of the `Task[α, β]`
+ *
+ * @summary @Task[α, β] => Void → String
+ */
+Task.prototype.toString = function _toString() {
+  return 'Task';
+};
+
+// -- Extracting and recovering ----------------------------------------
+
+/**
+ * Transforms a failure value into a new `Task[α, β]`. Does nothing if the
+ * structure already contains a successful value.
+ *
+ * @summary @Task[α, β] => (α → Task[γ, β]) → Task[γ, β]
+ */
+Task.prototype.orElse = function _orElse(f) {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return f(a).fork(reject, resolve);
+    }, function(b) {
+      return resolve(b);
+    });
+  }, cleanup);
+};
+
+// -- Folds and extended transformations -------------------------------
+
+/**
+ * Catamorphism. Takes two functions, applies the leftmost one to the failure
+ * value, and the rightmost one to the successful value, depending on which one
+ * is present.
+ *
+ * @summary @Task[α, β] => (α → γ), (β → γ) → Task[δ, γ]
+ */
+Task.prototype.fold = function _fold(f, g) {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return resolve(f(a));
+    }, function(b) {
+      return resolve(g(b));
+    });
+  }, cleanup);
+};
+
+/**
+ * Catamorphism.
+ *
+ * @summary @Task[α, β] => { Rejected: α → γ, Resolved: β → γ } → Task[δ, γ]
+ */
+Task.prototype.cata = function _cata(pattern) {
+  return this.fold(pattern.Rejected, pattern.Resolved);
+};
+
+/**
+ * Swaps the disjunction values.
+ *
+ * @summary @Task[α, β] => Void → Task[β, α]
+ */
+Task.prototype.swap = function _swap() {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return resolve(a);
+    }, function(b) {
+      return reject(b);
+    });
+  }, cleanup);
+};
+
+/**
+ * Maps both sides of the disjunction.
+ *
+ * @summary @Task[α, β] => (α → γ), (β → δ) → Task[γ, δ]
+ */
+Task.prototype.bimap = function _bimap(f, g) {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return reject(f(a));
+    }, function(b) {
+      return resolve(g(b));
+    });
+  }, cleanup);
+};
+
+/**
+ * Maps the left side of the disjunction (failure).
+ *
+ * @summary @Task[α, β] => (α → γ) → Task[γ, β]
+ */
+Task.prototype.rejectedMap = function _rejectedMap(f) {
+  var fork = this.fork;
+  var cleanup = this.cleanup;
+
+  return new Task(function(reject, resolve) {
+    return fork(function(a) {
+      return reject(f(a));
+    }, function(b) {
+      return resolve(b);
+    });
+  }, cleanup);
+};
+
+},{"process":"../node_modules/process/browser.js"}],"../node_modules/data.task/lib/index.js":[function(require,module,exports) {
+module.exports = require('./task');
+
+},{"./task":"../node_modules/data.task/lib/task.js"}],"../node_modules/data.either/lib/either.js":[function(require,module,exports) {
+// Copyright (c) 2013-2014 Quildreen Motta <quildreen@gmail.com>
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation files
+// (the "Software"), to deal in the Software without restriction,
+// including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software,
+// and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+/**
+ * @module lib/either
+ */
+module.exports = Either
+
+// -- Aliases ----------------------------------------------------------
+var clone         = Object.create
+var unimplemented = function(){ throw new Error('Not implemented.') }
+var noop          = function(){ return this                         }
+
+
+// -- Implementation ---------------------------------------------------
+
+/**
+ * The `Either(a, b)` structure represents the logical disjunction between `a`
+ * and `b`. In other words, `Either` may contain either a value of type `a` or
+ * a value of type `b`, at any given time. This particular implementation is
+ * biased on the right value (`b`), thus projections will take the right value
+ * over the left one.
+ *
+ * This class models two different cases: `Left a` and `Right b`, and can hold
+ * one of the cases at any given time. The projections are, none the less,
+ * biased for the `Right` case, thus a common use case for this structure is to
+ * hold the results of computations that may fail, when you want to store
+ * additional information on the failure (instead of throwing an exception).
+ *
+ * Furthermore, the values of `Either(a, b)` can be combined and manipulated by
+ * using the expressive monadic operations. This allows safely sequencing
+ * operations that may fail, and safely composing values that you don't know
+ * whether they're present or not, failing early (returning a `Left a`) if any
+ * of the operations fail.
+ *
+ * While this class can certainly model input validations, the [Validation][]
+ * structure lends itself better to that use case, since it can naturally
+ * aggregate failures — monads shortcut on the first failure.
+ *
+ * [Validation]: https://github.com/folktale/data.validation
+ *
+ *
+ * @class
+ * @summary
+ * Either[α, β] <: Applicative[β]
+ *               , Functor[β]
+ *               , Chain[β]
+ *               , Show
+ *               , Eq
+ */
+function Either() { }
+
+Left.prototype = clone(Either.prototype)
+function Left(a) {
+  this.value = a
+}
+
+Right.prototype = clone(Either.prototype)
+function Right(a) {
+  this.value = a
+}
+
+// -- Constructors -----------------------------------------------------
+
+/**
+ * Constructs a new `Either[α, β]` structure holding a `Left` value. This
+ * usually represents a failure due to the right-bias of this structure.
+ *
+ * @summary a → Either[α, β]
+ */
+Either.Left = function(a) {
+  return new Left(a)
+}
+Either.prototype.Left = Either.Left
+
+/**
+ * Constructs a new `Either[α, β]` structure holding a `Right` value. This
+ * usually represents a successful value due to the right bias of this
+ * structure.
+ *
+ * @summary β → Either[α, β]
+ */
+Either.Right = function(a) {
+  return new Right(a)
+}
+Either.prototype.Right = Either.Right
+
+
+// -- Conversions ------------------------------------------------------
+
+/**
+ * Constructs a new `Either[α, β]` structure from a nullable type.
+ *
+ * Takes the `Left` case if the value is `null` or `undefined`. Takes the
+ * `Right` case otherwise.
+ *
+ * @summary α → Either[α, α]
+ */
+Either.fromNullable = function(a) {
+  return a != null?       new Right(a)
+  :      /* otherwise */  new Left(a)
+}
+Either.prototype.fromNullable = Either.fromNullable
+
+/**
+ * Constructs a new `Either[α, β]` structure from a `Validation[α, β]` type.
+ *
+ * @summary Validation[α, β] → Either[α, β]
+ */
+Either.fromValidation = function(a) {
+  return a.fold(Either.Left, Either.Right)
+}
+
+/**
+ * Executes a synchronous computation that may throw and converts it to an
+ * Either type.
+ *
+ * @summary (α₁, α₂, ..., αₙ -> β :: throws γ) -> (α₁, α₂, ..., αₙ -> Either[γ, β])
+ */
+Either.try = function(f) {
+  return function() {
+    try {
+      return new Right(f.apply(null, arguments))
+    } catch(e) {
+      return new Left(e)
+    }
+  }
+}
+
+
+// -- Predicates -------------------------------------------------------
+
+/**
+ * True if the `Either[α, β]` contains a `Left` value.
+ *
+ * @summary Boolean
+ */
+Either.prototype.isLeft = false
+Left.prototype.isLeft   = true
+
+/**
+ * True if the `Either[α, β]` contains a `Right` value.
+ *
+ * @summary Boolean
+ */
+Either.prototype.isRight = false
+Right.prototype.isRight  = true
+
+
+// -- Applicative ------------------------------------------------------
+
+/**
+ * Creates a new `Either[α, β]` instance holding the `Right` value `b`.
+ *
+ * `b` can be any value, including `null`, `undefined` or another
+ * `Either[α, β]` structure.
+ *
+ * @summary β → Either[α, β]
+ */
+Either.of = function(a) {
+  return new Right(a)
+}
+Either.prototype.of = Either.of
+
+
+/**
+ * Applies the function inside the `Right` case of the `Either[α, β]` structure
+ * to another applicative type.
+ *
+ * The `Either[α, β]` should contain a function value, otherwise a `TypeError`
+ * is thrown.
+ *
+ * @method
+ * @summary (@Either[α, β → γ], f:Applicative[_]) => f[β] → f[γ]
+ */
+Either.prototype.ap = unimplemented
+
+Left.prototype.ap = function(b) {
+  return this
+}
+
+Right.prototype.ap = function(b) {
+  return b.map(this.value)
+}
+
+
+// -- Functor ----------------------------------------------------------
+
+/**
+ * Transforms the `Right` value of the `Either[α, β]` structure using a regular
+ * unary function.
+ *
+ * @method
+ * @summary (@Either[α, β]) => (β → γ) → Either[α, γ]
+ */
+Either.prototype.map = unimplemented
+Left.prototype.map   = noop
+
+Right.prototype.map = function(f) {
+  return this.of(f(this.value))
+}
+
+
+// -- Chain ------------------------------------------------------------
+
+/**
+ * Transforms the `Right` value of the `Either[α, β]` structure using an unary
+ * function to monads.
+ *
+ * @method
+ * @summary (@Either[α, β], m:Monad[_]) => (β → m[γ]) → m[γ]
+ */
+Either.prototype.chain = unimplemented
+Left.prototype.chain   = noop
+
+Right.prototype.chain = function(f) {
+  return f(this.value)
+}
+
+// -- Semigroup ----------------------------------------------------------
+
+/**
+ * Concats the `Right` value of the `Either[α, β]` structure with another `Right` or keeps the `Left` on either side
+ *
+ * @method
+ * @summary (@Either[α, m:Monoid]) => Either[β, m] → Either[α, m]
+ */
+Either.prototype.concat = unimplemented
+
+Left.prototype.concat = function(other) {
+  return this
+}
+
+Right.prototype.concat = function(other) {
+  var that = this
+  return other.fold(function(_){
+                      return other
+                    },
+                    function(y) {
+                      return that.Right(that.value.concat(y))
+                    })
+}
+
+
+// -- Show -------------------------------------------------------------
+
+/**
+ * Returns a textual representation of the `Either[α, β]` structure.
+ *
+ * @method
+ * @summary (@Either[α, β]) => Void → String
+ */
+Either.prototype.toString = unimplemented
+
+Left.prototype.toString = function() {
+  return 'Either.Left(' + this.value + ')'
+}
+
+Right.prototype.toString = function() {
+  return 'Either.Right(' + this.value + ')'
+}
+
+
+// -- Eq ---------------------------------------------------------------
+
+/**
+ * Tests if an `Either[α, β]` structure is equal to another `Either[α, β]`
+ * structure.
+ *
+ * @method
+ * @summary (@Either[α, β]) => Either[α, β] → Boolean
+ */
+Either.prototype.isEqual = unimplemented
+
+Left.prototype.isEqual = function(a) {
+  return a.isLeft && (a.value === this.value)
+}
+
+Right.prototype.isEqual = function(a) {
+  return a.isRight && (a.value === this.value)
+}
+
+
+// -- Extracting and recovering ----------------------------------------
+
+/**
+ * Extracts the `Right` value out of the `Either[α, β]` structure, if it
+ * exists. Otherwise throws a `TypeError`.
+ *
+ * @method
+ * @summary (@Either[α, β]) => Void → β         :: partial, throws
+ * @see {@link module:lib/either~Either#getOrElse} — A getter that can handle failures.
+ * @see {@link module:lib/either~Either#merge} — The convergence of both values.
+ * @throws {TypeError} if the structure has no `Right` value.
+ */
+Either.prototype.get = unimplemented
+
+Left.prototype.get = function() {
+  throw new TypeError("Can't extract the value of a Left(a).")
+}
+
+Right.prototype.get = function() {
+  return this.value
+}
+
+
+/**
+ * Extracts the `Right` value out of the `Either[α, β]` structure. If the
+ * structure doesn't have a `Right` value, returns the given default.
+ *
+ * @method
+ * @summary (@Either[α, β]) => β → β
+ */
+Either.prototype.getOrElse = unimplemented
+
+Left.prototype.getOrElse = function(a) {
+  return a
+}
+
+Right.prototype.getOrElse = function(_) {
+  return this.value
+}
+
+
+/**
+ * Transforms a `Left` value into a new `Either[α, β]` structure. Does nothing
+ * if the structure contain a `Right` value.
+ *
+ * @method
+ * @summary (@Either[α, β]) => (α → Either[γ, β]) → Either[γ, β]
+ */
+Either.prototype.orElse = unimplemented
+Right.prototype.orElse  = noop
+
+Left.prototype.orElse = function(f) {
+  return f(this.value)
+}
+
+
+/**
+ * Returns the value of whichever side of the disjunction that is present.
+ *
+ * @summary (@Either[α, α]) => Void → α
+ */
+Either.prototype.merge = function() {
+  return this.value
+}
+
+
+// -- Folds and Extended Transformations -------------------------------
+
+/**
+ * Applies a function to each case in this data structure.
+ *
+ * @method
+ * @summary (@Either[α, β]) => (α → γ), (β → γ) → γ
+ */
+Either.prototype.fold = unimplemented
+
+Left.prototype.fold = function(f, _) {
+  return f(this.value)
+}
+
+Right.prototype.fold = function(_, g) {
+  return g(this.value)
+}
+
+/**
+ * Catamorphism.
+ * 
+ * @method
+ * @summary (@Either[α, β]) => { Left: α → γ, Right: β → γ } → γ
+ */
+Either.prototype.cata = unimplemented
+
+Left.prototype.cata = function(pattern) {
+  return pattern.Left(this.value)
+}
+
+Right.prototype.cata = function(pattern) {
+  return pattern.Right(this.value)
+}
+
+
+/**
+ * Swaps the disjunction values.
+ *
+ * @method
+ * @summary (@Either[α, β]) => Void → Either[β, α]
+ */
+Either.prototype.swap = unimplemented
+
+Left.prototype.swap = function() {
+  return this.Right(this.value)
+}
+
+Right.prototype.swap = function() {
+  return this.Left(this.value)
+}
+
+
+/**
+ * Maps both sides of the disjunction.
+ *
+ * @method
+ * @summary (@Either[α, β]) => (α → γ), (β → δ) → Either[γ, δ]
+ */
+Either.prototype.bimap = unimplemented
+
+Left.prototype.bimap = function(f, _) {
+  return this.Left(f(this.value))
+}
+
+Right.prototype.bimap = function(_, g) {
+  return this.Right(g(this.value))
+}
+
+
+/**
+ * Maps the left side of the disjunction.
+ *
+ * @method
+ * @summary (@Either[α, β]) => (α → γ) → Either[γ, β]
+ */
+Either.prototype.leftMap = unimplemented
+Right.prototype.leftMap  = noop
+
+Left.prototype.leftMap = function(f) {
+  return this.Left(f(this.value))
+}
+
+},{}],"../node_modules/data.either/lib/index.js":[function(require,module,exports) {
+// Copyright (c) 2013-2014 Quildreen Motta <quildreen@gmail.com>
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation files
+// (the "Software"), to deal in the Software without restriction,
+// including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software,
+// and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+module.exports = require('./either')
+},{"./either":"../node_modules/data.either/lib/either.js"}],"js/learningservices/shared.js":[function(require,module,exports) {
+"use strict";
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/*eslint no-undef: "error"*/
+
+/*eslint-env node*/
+var Task = require('data.task'),
+    Either = require('data.either'),
+    _require = require('ramda'),
+    sequence = _require.sequence,
+    curry = _require.curry,
+    compose = _require.compose,
+    is = _require.is;
+
+var WEBSERVICEPATH = '/webservice/rest/server.php'; // For debugging in a compose
+
+var trace = function trace(x) {
+  console.log('>>> ', x);
+  return x;
+}; // 1 Just getting an array w/ unique values using a object/keys then getting the keys
+
+
+var keys = function keys(obj) {
+  return Object.keys(obj);
+}; // 2
+
+
+var createObjectKeyMap = curry(function (key, arry) {
+  return arry.reduce(function (acc, el) {
+    acc[el[key]] = 1;
+    return acc;
+  }, {});
+}); // 3
+
+var getUniqueKeys = function getUniqueKeys(key, arry) {
+  return compose(keys, createObjectKeyMap(key))(arry);
+}; // eitherToTask :: Either -> Task
+
+
+var eitherToTask = function eitherToTask(either) {
+  return either.fold(Task.rejected, Task.of);
+};
+
+var concatUnique = function concatUnique(x, ys) {
+  return Either.fromNullable(ys.filter(function (y) {
+    return y === x;
+  })[0]).fold(function () {
+    return ys.concat(x);
+  }, function (y) {
+    return ys;
+  });
+};
+
+var dynamicSortObjArry = function dynamicSortObjArry(property) {
+  return function (a, b) {
+    return a[property] < b[property] ? -1 : a[property] > b[property] ? 1 : 0;
+  };
+}; // getDateAsSeconds :: Object -> Number
+
+
+var dateObjToSeconds = function dateObjToSeconds(_ref) {
+  var year = _ref.year,
+      month = _ref.month,
+      day = _ref.day;
+  return new Date(year, month, day).valueOf() / 1000;
+};
+
+var formatSecondsToDate = function formatSecondsToDate(seconds) {
+  return new Date(parseInt(seconds * 1000)).toLocaleDateString();
+};
+
+var formatSecondsToDateObj = function formatSecondsToDateObj(seconds) {
+  return new Date(parseInt(seconds * 1000));
+};
+
+var getMatchDates = function getMatchDates(str) {
+  return str.match(/\s*(?:(?:jan|feb)?r?(?:uary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|oct(?:ober)?|(?:sept?|nov|dec)(?:ember)?)\s+\d{1,2}\s*,?\s*\d{4}/ig);
+};
+
+var getMatchTimes = function getMatchTimes(str) {
+  return str.match(/(\d{1,2})\s*:\s*(\d{2})\s*([ap]m?)/ig);
+};
+
+var hrTo24 = function hrTo24(hr, pm) {
+  hr = parseInt(hr);
+  var fhr = (hr === 12 ? 0 : hr) + (pm ? 12 : 0);
+
+  if (fhr < 10) {
+    fhr = '0' + fhr;
+  }
+
+  return fhr;
+};
+
+var formatSecondsToHHMM = function formatSecondsToHHMM(seconds) {
+  var d = Number(seconds),
+      h = Math.floor(d / 3600),
+      m = Math.floor(d % 3600 / 60);
+  return (h > 0 ? h + ':' + (m < 10 ? '0' : '') : '') + m;
+}; // Convert one of these 9:00 AM, 5:00 PM to 09:00 or 17:00
+
+
+var convertTimeStrToHourStr = function convertTimeStrToHourStr(str) {
+  var is24 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+  var parts = str.toLowerCase().split(' '),
+      time = parts[0].split(':'),
+      hr = is24 ? hrTo24(time[0], parts[1] === 'pm') : time[0];
+  return [hr, time[1]].join(':');
+};
+
+var formatSecDurationToStr = function formatSecDurationToStr(seconds) {
+  var hhmm = formatSecondsToHHMM(seconds),
+      split = hhmm.split(':'),
+      tothrs = parseInt(split[0]),
+      days = Math.floor(tothrs / 8),
+      hrs = tothrs % 8,
+      mins = parseInt(split[1]);
+  return (days ? days + ' days' : '') + (hrs ? ' ' + hrs + ' hrs' : '') + (mins ? ' ' + mins + ' mins' : '');
+}; // http://www.techrepublic.com/article/convert-the-local-time-to-another-time-zone-with-this-javascript/
+
+
+var convertDateToTimeZone = function convertDateToTimeZone(date, offset) {
+  var dlocalTime = date.getTime(),
+      dlocalOffset = date.getTimezoneOffset() * 60000,
+      dutcMS = dlocalTime + dlocalOffset,
+      targetzonemc = dutcMS + 3600000 * offset;
+  return new Date(targetzonemc);
+}; // HTML tags
+
+
+var removeTagsStr = function removeTagsStr(str) {
+  return str.replace(/(<([^>]+)>)/ig, '');
+}; // carriage returns and line feeds
+
+
+var removeCRLFStr = function removeCRLFStr(str) {
+  return str.replace(/(\r\n|\n|\r)/ig, ' ');
+}; // HTML entities
+
+
+var removeEntityStr = function removeEntityStr(str) {
+  return str.replace(/(&(#?)(?:[a-z\d]+|#\d+|#x[a-f\d]+);)/ig, '');
+}; // removeHTML :: String -> String
+
+
+var removeHTML = function removeHTML(str) {
+  return Either.fromNullable(str).map(removeEntityStr).map(removeTagsStr).map(removeCRLFStr).fold(function () {
+    return '';
+  }, function (s) {
+    return s;
+  });
+};
+/*
+ Turn an object of {key1:value1, key2:value2, ...} into paramname=value[&...]
+ Only works on shallow objects
+ */
+// acc += (idx > 0 ? '&' : '') + key + '=' + encodeURIComponent(objArry[key]);
+
+
+var parameterize = function parameterize(objArry) {
+  return Object.keys(objArry).reduce(function (acc, key) {
+    acc.push(key + '=' + encodeURIComponent(objArry[key]));
+    return acc;
+  }, ['?']).join('&');
+}; // urlStem and token are destructed from the config.json webservice object
+
+
+var createLMSURL = function createLMSURL(_ref2, fn) {
+  var urlStem = _ref2.urlStem,
+      token = _ref2.token;
+  var additionalParams = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var params = {
+    wstoken: token,
+    wsfunction: fn,
+    moodlewsrestformat: 'json'
+  };
+  params = Object.assign(params, additionalParams);
+  return urlStem + WEBSERVICEPATH + parameterize(params);
+};
+/*
+ wsOptions: {urlStem, token}
+ fn: web service function to calls
+ params: additional query string params
+ resultKey: will wrap result in object w/ this key and result as value
+ */
+
+
+var createLMSQuery = function createLMSQuery(wsOptions, fn, params, resultKey) {
+  return new Task(function (reject, resolve) {
+    fetch(createLMSURL(wsOptions, fn, params)) // Since json() returns another promise, need to chain it down to resolve
+    .then(function (res) {
+      return res.json().then(function (json) {
+        resolve(resultKey ? (0, _defineProperty2.default)({}, resultKey, json) : json);
+      });
+    }).catch(function (e) {
+      reject(fn + ' : ' + e);
+    });
+  });
+};
+
+var getLRSAuthToken = function getLRSAuthToken(wsOptions) {
+  return new Task(function (reject, resolve) {
+    var params = {
+      grant_type: 'client_credentials',
+      client_id: wsOptions.key,
+      client_secret: wsOptions.secret,
+      scope: 'xapi:write'
+    };
+    var url = wsOptions.authendpoint + parameterize(params);
+    console.log(url);
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }) // Debug, just the output
+    // .then(res =>  {
+    //  console.log('from lrs',res);
+    //  resolve([{}]);
+    // })
+    .then(function (res) {
+      return res.json().then(function (json) {
+        resolve(json);
+      });
+    }).catch(function (e) {
+      reject('getLRSAuthToken: ' + e);
+    });
+  });
+}; // If params is a string, it's assumed it's a properly formatted endpoint + function + query
+// and just runs it
+
+
+var createLRSQuery = function createLRSQuery(wsOptions) {
+  var method = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'POST';
+  var params = arguments.length > 2 ? arguments[2] : undefined;
+  var body = arguments.length > 3 ? arguments[3] : undefined;
+  return new Task(function (reject, resolve) {
+    //+ '/data/xAPI/statements'
+    var url = is(String, params) ? wsOptions.endpoint + params : wsOptions.endpoint + parameterize(params);
+    var tokentype = wsOptions.hasOwnProperty('tokentype') ? wsOptions.tokentype : 'Basic'; // console.log('createLRSQuery', url);
+
+    fetch(url, {
+      method: method,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        // 'Authorization'           : 'Basic ' + wsOptions.token,
+        'Authorization': "".concat(tokentype, " ").concat(wsOptions.token),
+        'X-Experience-API-Version': wsOptions.version
+      }
+    }) // Debug, just the output
+    // .then(res =>  {
+    //  console.log('from lrs',res);
+    //  resolve([{}]);
+    // })
+    .then(function (res) {
+      return res.json().then(function (json) {
+        resolve(json);
+      });
+    }).catch(function (e) {
+      reject('createLRSQuery: ' + e);
+    });
+  });
+}; // Table could be "function" but since PostGREST turns database tables into functions
+// I'm keeping with the origional terminology
+
+
+var createSDBQuery = function createSDBQuery(wsOptions, table) {
+  var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  return new Task(function (reject, resolve) {
+    fetch(wsOptions.endpoint + table + parameterize(params), {
+      headers: wsOptions.headers
+    }).then(function (res) {
+      return res.json().then(function (json) {
+        resolve(json);
+      });
+    }).catch(function (e) {
+      reject(table + ' : ' + e);
+    });
+  });
+}; // Chain an array of Tasks in to one task
+
+
+var chainTasks = function chainTasks(taskArry) {
+  return sequence(Task.of, taskArry);
+};
+
+module.exports = {
+  trace: trace,
+  getUniqueKeys: getUniqueKeys,
+  dynamicSortObjArry: dynamicSortObjArry,
+  removeHTML: removeHTML,
+  dateObjToSeconds: dateObjToSeconds,
+  formatSecondsToDate: formatSecondsToDate,
+  formatSecondsToDateObj: formatSecondsToDateObj,
+  formatSecDurationToStr: formatSecDurationToStr,
+  convertTimeStrToHourStr: convertTimeStrToHourStr,
+  getMatchDates: getMatchDates,
+  getMatchTimes: getMatchTimes,
+  parameterize: parameterize,
+  chainTasks: chainTasks,
+  createLMSURL: createLMSURL,
+  createLMSQuery: createLMSQuery,
+  getLRSAuthToken: getLRSAuthToken,
+  createLRSQuery: createLRSQuery,
+  createSDBQuery: createSDBQuery
+};
+},{"@babel/runtime/helpers/defineProperty":"../node_modules/@babel/runtime/helpers/defineProperty.js","data.task":"../node_modules/data.task/lib/index.js","data.either":"../node_modules/data.either/lib/index.js","ramda":"../node_modules/ramda/es/index.js"}],"js/learningservices/lrs/ADL-Verbs.js":[function(require,module,exports) {
+// https://github.com/adlnet/xAPIVerbs
+// Modified for an ES6 module by Matt Perkins 4/28/16
+module.exports = {
+  "abandoned": {
+    "id": "https://w3id.org/xapi/adl/verbs/abandoned",
+    "display": {
+      "en-US": "abandoned"
+    }
+  },
+  "answered": {
+    "id": "http://adlnet.gov/expapi/verbs/answered",
+    "display": {
+      "de-DE": "beantwortete",
+      "en-US": "answered",
+      "fr-FR": "a répondu",
+      "es-ES": "contestó"
+    }
+  },
+  "asked": {
+    "id": "http://adlnet.gov/expapi/verbs/asked",
+    "display": {
+      "de-DE": "fragte",
+      "en-US": "asked",
+      "fr-FR": "a demandé",
+      "es-ES": "preguntó"
+    }
+  },
+  "attempted": {
+    "id": "http://adlnet.gov/expapi/verbs/attempted",
+    "display": {
+      "de-DE": "versuchte",
+      "en-US": "attempted",
+      "fr-FR": "a essayé",
+      "es-ES": "intentó"
+    }
+  },
+  "attended": {
+    "id": "http://adlnet.gov/expapi/verbs/attended",
+    "display": {
+      "de-DE": "nahm teil an",
+      "en-US": "attended",
+      "fr-FR": "a suivi",
+      "es-ES": "asistió"
+    }
+  },
+  "commented": {
+    "id": "http://adlnet.gov/expapi/verbs/commented",
+    "display": {
+      "de-DE": "kommentierte",
+      "en-US": "commented",
+      "fr-FR": "a commenté",
+      "es-ES": "comentó"
+    }
+  },
+  "completed": {
+    "id": "http://adlnet.gov/expapi/verbs/completed",
+    "display": {
+      "de-DE": "beendete",
+      "en-US": "completed",
+      "fr-FR": "a terminé",
+      "es-ES": "completó"
+    }
+  },
+  "exited": {
+    "id": "http://adlnet.gov/expapi/verbs/exited",
+    "display": {
+      "de-DE": "verließ",
+      "en-US": "exited",
+      "fr-FR": "a quitté",
+      "es-ES": "salió"
+    }
+  },
+  "experienced": {
+    "id": "http://adlnet.gov/expapi/verbs/experienced",
+    "display": {
+      "de-DE": "erlebte",
+      "en-US": "experienced",
+      "fr-FR": "a éprouvé",
+      "es-ES": "experimentó"
+    }
+  },
+  "failed": {
+    "id": "http://adlnet.gov/expapi/verbs/failed",
+    "display": {
+      "de-DE": "verfehlte",
+      "en-US": "failed",
+      "fr-FR": "a échoué",
+      "es-ES": "fracasó"
+    }
+  },
+  "imported": {
+    "id": "http://adlnet.gov/expapi/verbs/imported",
+    "display": {
+      "de-DE": "importierte",
+      "en-US": "imported",
+      "fr-FR": "a importé",
+      "es-ES": "importó"
+    }
+  },
+  "initialized": {
+    "id": "http://adlnet.gov/expapi/verbs/initialized",
+    "display": {
+      "de-DE": "initialisierte",
+      "en-US": "initialized",
+      "fr-FR": "a initialisé",
+      "es-ES": "inicializó"
+    }
+  },
+  "interacted": {
+    "id": "http://adlnet.gov/expapi/verbs/interacted",
+    "display": {
+      "de-DE": "interagierte",
+      "en-US": "interacted",
+      "fr-FR": "a interagi",
+      "es-ES": "interactuó"
+    }
+  },
+  "launched": {
+    "id": "http://adlnet.gov/expapi/verbs/launched",
+    "display": {
+      "de-DE": "startete",
+      "en-US": "launched",
+      "fr-FR": "a lancé",
+      "es-ES": "lanzó"
+    }
+  },
+  "mastered": {
+    "id": "http://adlnet.gov/expapi/verbs/mastered",
+    "display": {
+      "de-DE": "meisterte",
+      "en-US": "mastered",
+      "fr-FR": "a maîtrisé",
+      "es-ES": "dominó"
+    }
+  },
+  "passed": {
+    "id": "http://adlnet.gov/expapi/verbs/passed",
+    "display": {
+      "de-DE": "bestand",
+      "en-US": "passed",
+      "fr-FR": "a réussi",
+      "es-ES": "aprobó"
+    }
+  },
+  "preferred": {
+    "id": "http://adlnet.gov/expapi/verbs/preferred",
+    "display": {
+      "de-DE": "bevorzugte",
+      "en-US": "preferred",
+      "fr-FR": "a préféré",
+      "es-ES": "prefirió"
+    }
+  },
+  "progressed": {
+    "id": "http://adlnet.gov/expapi/verbs/progressed",
+    "display": {
+      "de-DE": "machte Fortschritt mit",
+      "en-US": "progressed",
+      "fr-FR": "a progressé",
+      "es-ES": "progresó"
+    }
+  },
+  "registered": {
+    "id": "http://adlnet.gov/expapi/verbs/registered",
+    "display": {
+      "de-DE": "registrierte",
+      "en-US": "registered",
+      "fr-FR": "a enregistré",
+      "es-ES": "registró"
+    }
+  },
+  "responded": {
+    "id": "http://adlnet.gov/expapi/verbs/responded",
+    "display": {
+      "de-DE": "reagierte",
+      "en-US": "responded",
+      "fr-FR": "a répondu",
+      "es-ES": "respondió"
+    }
+  },
+  "resumed": {
+    "id": "http://adlnet.gov/expapi/verbs/resumed",
+    "display": {
+      "de-DE": "setzte fort",
+      "en-US": "resumed",
+      "fr-FR": "a repris",
+      "es-ES": "continuó"
+    }
+  },
+  "satisfied": {
+    "id": "https://w3id.org/xapi/adl/verbs/satisfied",
+    "display": {
+      "en-US": "satisfied"
+    }
+  },
+  "scored": {
+    "id": "http://adlnet.gov/expapi/verbs/scored",
+    "display": {
+      "de-DE": "erreichte",
+      "en-US": "scored",
+      "fr-FR": "a marqué",
+      "es-ES": "anotó"
+    }
+  },
+  "shared": {
+    "id": "http://adlnet.gov/expapi/verbs/shared",
+    "display": {
+      "de-DE": "teilte",
+      "en-US": "shared",
+      "fr-FR": "a partagé",
+      "es-ES": "compartió"
+    }
+  },
+  "suspended": {
+    "id": "http://adlnet.gov/expapi/verbs/suspended",
+    "display": {
+      "de-DE": "pausierte",
+      "en-US": "suspended",
+      "fr-FR": "a suspendu",
+      "es-ES": "aplazó"
+    }
+  },
+  "terminated": {
+    "id": "http://adlnet.gov/expapi/verbs/terminated",
+    "display": {
+      "de-DE": "beendete",
+      "en-US": "terminated",
+      "fr-FR": "a terminé",
+      "es-ES": "terminó"
+    }
+  },
+  "voided": {
+    "id": "http://adlnet.gov/expapi/verbs/voided",
+    "display": {
+      "de-DE": "entwertete",
+      "en-US": "voided",
+      "fr-FR": "a annulé",
+      "es-ES": "anuló"
+    }
+  },
+  "waived": {
+    "id": "https://w3id.org/xapi/adl/verbs/waived",
+    "display": {
+      "en-US": "waived"
+    }
+  },
+  //----------------------------------------------------------------------------
+  // Manually added
+  // Sources
+  // https://github.com/jiscdev/xapi/tree/master/recipes
+  //----------------------------------------------------------------------------
+  "loggedin": {
+    "id": "https://brindlewaye.com/xAPITerms/verbs/loggedin",
+    "display": {
+      "en-US": "loggedin"
+    }
+  },
+  "loggedout": {
+    "id": "https://brindlewaye.com/xAPITerms/verbs/loggedout",
+    "display": {
+      "en-US": "loggedout"
+    }
+  }
+};
+},{}],"js/learningservices/lrs/ADL-Activity.js":[function(require,module,exports) {
+// http://xapi.vocab.pub/datasets/adl/
+module.exports = {
+  'assessment': {
+    'id': 'http://adlnet.gov/expapi/activities/assessment',
+    'display': {
+      'en-US': 'assessment'
+    }
+  },
+  'attempt': {
+    'id': 'http://adlnet.gov/expapi/activities/attempt',
+    'display': {
+      'en-US': 'attempt'
+    }
+  },
+  'course': {
+    'id': 'http://adlnet.gov/expapi/activities/course',
+    'display': {
+      'en-US': 'course'
+    }
+  },
+  'file': {
+    'id': 'http://adlnet.gov/expapi/activities/file',
+    'display': {
+      'en-US': 'file'
+    }
+  },
+  'interaction': {
+    'id': 'http://adlnet.gov/expapi/activities/interaction',
+    'display': {
+      'en-US': 'interaction'
+    }
+  },
+  'lesson': {
+    'id': 'http://adlnet.gov/expapi/activities/lesson',
+    'display': {
+      'en-US': 'lesson'
+    }
+  },
+  'link': {
+    'id': 'http://adlnet.gov/expapi/activities/link',
+    'display': {
+      'en-US': 'link'
+    }
+  },
+  'media': {
+    'id': 'http://adlnet.gov/expapi/activities/media',
+    'display': {
+      'en-US': 'media'
+    }
+  },
+  'meeting': {
+    'id': 'http://adlnet.gov/expapi/activities/meeting',
+    'display': {
+      'en-US': 'meeting'
+    }
+  },
+  'module': {
+    'id': 'http://adlnet.gov/expapi/activities/module',
+    'display': {
+      'en-US': 'module'
+    }
+  },
+  'objective': {
+    'id': 'http://adlnet.gov/expapi/activities/objective',
+    'display': {
+      'en-US': 'objective'
+    }
+  },
+  'performance': {
+    'id': 'http://adlnet.gov/expapi/activities/performance',
+    'display': {
+      'en-US': 'performance'
+    }
+  },
+  'profile': {
+    'id': 'http://adlnet.gov/expapi/activities/profile',
+    'display': {
+      'en-US': 'profile'
+    }
+  },
+  'question': {
+    'id': 'http://adlnet.gov/expapi/activities/question',
+    'display': {
+      'en-US': 'question'
+    }
+  },
+  'simulation': {
+    'id': 'http://adlnet.gov/expapi/activities/simulation',
+    'display': {
+      'en-US': 'simulation'
+    }
+  }
+};
+},{}],"js/learningservices/lrs/LRS.js":[function(require,module,exports) {
+"use strict";
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Simple module to send xAPI statements to an LRS
+ * Matt Perkins, mperkins@redhat.com
+ * Last Updated, 1/6/17
+ *
+ * Full doc https://github.com/adlnet/xAPI-Spec/blob/master/xAPI.md#result
+ * TinCan Module docs http://rusticisoftware.github.io/TinCanJS/
+ * Statements https://tincanapi.com/statements-101/
+ * More https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#parttwo
+ * XAPI Wrapper here https://github.com/adlnet/xAPIWrapper/blob/master/src/xapiwrapper.js
+ *
+ */
+var Task = require('data.task'),
+    Either = require('data.either'),
+    _require = require('ramda'),
+    curry = _require.curry,
+    compose = _require.compose,
+    concat = _require.concat,
+    verbDictionary = require('./ADL-Verbs'),
+    activityDictionary = require('./ADL-Activity'),
+    _require2 = require('lodash'),
+    defaults = _require2.defaults,
+    _require3 = require('../shared'),
+    createLRSQuery = _require3.createLRSQuery,
+    parameterize = _require3.parameterize,
+    verbURLPrefix = 'http://adlnet.gov/expapi/verbs/',
+    activityURLPrefix = 'http://adlnet.gov/expapi/activities/',
+    defaultLanguage = 'en-US',
+    lrsOptions,
+    defaultProps = {}; // Set connection options
+// obj -> endpoint: Str, token: Str, version: Str
+// token is the key/secret or user/pass base 64 encoded: 'key:secret' -> base64
+
+
+var setLRSOptions = function setLRSOptions(obj) {
+  lrsOptions = obj; // Don't want to do this since it'll override these props as part of a later
+  // statement
+  //setDefaultsFromOptions(lrsOptions);
+}; // Set defaults to be applied to each statement
+
+
+var setStatementDefaults = function setStatementDefaults(defaultObj) {
+  defaultProps = Object.assign(Object.create(null), defaultObj);
+}; // Set basic statement props that I've commonly used
+
+/*const setDefaultsFromOptions = (options) => {
+  setStatementDefaults({
+    result : {
+      completion: true
+    },
+    context: {
+      platform         : options.contextID,
+      revision         : '1',
+      contextActivities: {
+        grouping: [{id: options.contextGroup}],
+        parent  : [{
+          id        : options.contextParent,
+          objectType: 'Activity'
+        }],
+        category: [{
+          id        : options.contextCategory,
+          definition: {type: 'http://id.tincanapi.com/activitytype/source'}
+        }],
+        extensions       : {
+          ['http://learning.redhat.com/lmsid']: lmsid,
+          ['http://learning.redhat.com/oracleid']:oracleid
+        }
+      }
+    }
+  });
+};*/
+
+
+var _getDictionaryWordsList = function _getDictionaryWordsList(dictionary) {
+  return Object.keys(dictionary).map(function (key) {
+    return dictionary[key].display[defaultLanguage];
+  });
+}; // Returns array of verbs from the ADL list
+
+
+var getVerbsList = function getVerbsList() {
+  return _getDictionaryWordsList(verbDictionary);
+}; // True if the verb is on the ADL list
+
+
+var _validateVerb = function _validateVerb(verb) {
+  return getVerbsList().indexOf(verb.toLowerCase()) >= 0;
+}; // Returns array of activity from the ADL list
+
+
+var getActivitiesList = function getActivitiesList() {
+  return _getDictionaryWordsList(activityDictionary);
+}; // True if the activity is on the ADL list
+
+
+var _validateActivity = function _validateActivity(activity) {
+  return getActivitiesList().indexOf(activity.toLowerCase()) >= 0;
+}; // Create an xAPI statement object from a partial
+
+
+var createStatement = function createStatement(partialStatement) {
+  var statement,
+      subjectName = partialStatement.subjectName,
+      subjectID = partialStatement.subjectID,
+      verbDisplay = partialStatement.verbDisplay,
+      objectID = partialStatement.objectID,
+      objectType = partialStatement.objectType,
+      objectName = partialStatement.objectName; // This check may be used for troubleshooting
+  // if (!_validateVerb(verbDisplay)) {
+  //   console.log('Verb is not in the dictionary: ' + verbDisplay);
+  // }
+
+  statement = defaults({
+    actor: {
+      name: subjectName,
+      mbox: 'mailto:' + subjectID
+    },
+    verb: {
+      id: verbURLPrefix + verbDisplay.toLowerCase(),
+      display: {
+        'en-US': verbDisplay.toLowerCase()
+      }
+    },
+    object: {
+      id: objectID,
+      definition: {
+        type: objectType ? activityURLPrefix + objectType : null,
+        name: {
+          'en-US': objectName
+        }
+      }
+    }
+  }, defaultProps);
+  return statement;
+}; // Send an xAPI statement
+// statement may be an array of statements
+// ex: sendStatement(opts, createStatement(fragment)).fork(console.warn, log);
+
+
+var sendStatement = curry(function (options, statement) {
+  if (options) {
+    setLRSOptions(options);
+  }
+
+  return Either.fromNullable(options || lrsOptions).fold(function () {
+    return new Task.rejected('sendStatement: Need LRS options');
+  }, function () {
+    return createLRSQuery(lrsOptions, 'POST', {}, JSON.stringify(statement));
+  });
+}); // Send a partial xAPI statement to the LRS. Will first be filled out w/ defaults
+
+var sendFragment = curry(function (options, fragment) {
+  return compose(sendStatement(options), createStatement)(fragment);
+}); // Helper to create an LRS statement query from an email address
+
+var createAgentEmailQuery = function createAgentEmailQuery(email) {
+  if (!validateEmail(email)) {
+    console.error('createAgentEmailQuery with "' + email + '" is not a valid email address. Request will fail.');
+  }
+
+  return {
+    agent: JSON.stringify({
+      objectType: 'Agent',
+      mbox: "mailto:".concat(email)
+    })
+  };
+};
+
+var validateEmail = function validateEmail(email) {
+  var regex = /.+@.+/;
+  return regex.test(email);
+}; // Get first 100 statements from the LRS
+// Statement may be an individual ID, array or null for all of them
+// ex: requestStatements(opts, createAgentEmailQuery('blueberry@pietown.com')).fork(console.warn, log);
+
+
+var requestStatements = curry(function (options, query) {
+  if (options) {
+    setLRSOptions(options);
+  }
+
+  return Either.fromNullable(options || lrsOptions).fold(function () {
+    return new Task.rejected('requestStatements: Need LRS options');
+  }, function () {
+    return createLRSQuery(lrsOptions, 'GET', query);
+  });
+}); // Recursively query for all user statements
+
+var requestAllStatements = curry(function (options, query) {
+  if (options) {
+    setLRSOptions(options);
+  }
+
+  return new Task(function (rej, res) {
+    var makeQuery = function makeQuery(more) {
+      return Either.fromNullable(options || lrsOptions).fold(function () {
+        return new Task.rejected('requestAllStatements: Need LRS options');
+      }, function () {
+        return more ? createLRSQuery(lrsOptions, 'GET', more) : createLRSQuery(lrsOptions, 'GET', query);
+      });
+    }; // Recursively execute tasks
+
+
+    var next = function next(task, accumulator) {
+      task.fork(function (e) {
+        console.error(e);
+        rej(e);
+      }, function (statmentRes) {
+        if (statmentRes.more) {
+          next(makeQuery(statmentRes.more), concat(accumulator, statmentRes.statements));
+        } else {
+          res(concat(accumulator, statmentRes.statements));
+        }
+      });
+    }; // Start
+
+
+    next(makeQuery(null), []);
+  });
+});
+/*
+ {
+ ['statement.actor.mbox']        : 'mailto:' + email,
+ ['statement.context.platform']  : platform,
+ ['statement.verb.display.en-US']: verbDisplay,
+ ['statement.verb.id']           : verbId,
+ ['statement.object.id']         : objectId,
+ voided                          : false
+ }
+ */
+// https://docs.mongodb.com/manual/core/aggregation-pipeline/
+
+var createAggregateQuery = function createAggregateQuery() {
+  var _$project;
+
+  var match = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  if (!match.hasOwnProperty('voided')) {
+    match.voided = false;
+  }
+
+  var pipeline = [(0, _defineProperty2.default)({}, '$match', match), (0, _defineProperty2.default)({}, '$project', (_$project = {}, (0, _defineProperty2.default)(_$project, '_id', 0), (0, _defineProperty2.default)(_$project, "statement", 1), _$project)) //{
+  //  ['$sort']: {
+  //    'statement.timestamp': 1
+  //  }
+  //}
+  ];
+  return '/api/v1/statements/aggregate?pipeline=' + encodeURIComponent(JSON.stringify(pipeline));
+}; //http://docs.learninglocker.net/statements_api/#aggregate
+
+/* Results will be:
+res => {result: [{statement:{...}, ...]}
+Map unwraps this and returns an array of just statements
+If query is omitted, all data is returned
+ */
+
+
+var requestAggregate = curry(function (options, query) {
+  if (options) {
+    setLRSOptions(options);
+  }
+
+  return Either.fromNullable(options || lrsOptions).fold(function () {
+    return new Task.rejected('requestAggregate: Need LRS options');
+  }, function () {
+    return createLRSQuery(lrsOptions, 'GET', query).map(function (res) {
+      return res.result.reduce(function (acc, s) {
+        acc.push(s.statement);
+        return acc;
+      }, []);
+    });
+  });
+});
+module.exports = {
+  setLRSOptions: setLRSOptions,
+  setStatementDefaults: setStatementDefaults,
+  getVerbsList: getVerbsList,
+  getActivitiesList: getActivitiesList,
+  createStatement: createStatement,
+  sendStatement: sendStatement,
+  sendFragment: sendFragment,
+  createAgentEmailQuery: createAgentEmailQuery,
+  requestStatements: requestStatements,
+  requestAllStatements: requestAllStatements,
+  requestAggregate: requestAggregate,
+  createAggregateQuery: createAggregateQuery
+};
+},{"@babel/runtime/helpers/defineProperty":"../node_modules/@babel/runtime/helpers/defineProperty.js","data.task":"../node_modules/data.task/lib/index.js","data.either":"../node_modules/data.either/lib/index.js","ramda":"../node_modules/ramda/es/index.js","./ADL-Verbs":"js/learningservices/lrs/ADL-Verbs.js","./ADL-Activity":"js/learningservices/lrs/ADL-Activity.js","lodash":"../node_modules/lodash/lodash.js","../shared":"js/learningservices/shared.js"}],"js/pages/ReaderPage.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -53047,16 +55079,76 @@ exports.ReaderPage = void 0;
 
 var _Nori = require("../nori/Nori");
 
+var _Hooks = require("../nori/Hooks");
+
 var _QrReader = require("../components/QrReader");
 
+var _shared = require("../learningservices/shared");
+
+var _LRS = require("../learningservices/lrs/LRS");
+
+var _StringUtils = require("../nori/util/StringUtils");
+
 /* @jsx h */
+var ACTOR = {
+  actor: {
+    name: "Matt Perkins",
+    mbox: "mailto:hello@mattperkins.me",
+    objectType: "Agent"
+  }
+}; // Free Watershed Essentials account I created
+
+var LRS_CONNECTION = {
+  statementendpoint: "https://watershedlrs.com/api/organizations/7493/lrs/statements",
+  authendpoint: "https://watershedlrs.com/api/organizations/7493/oauth2/token",
+  token: "",
+  key: "3a9bbc9ad8dd39",
+  secret: "eaf5a4c46d1f9f",
+  version: "1.0.0"
+};
+
 var ReaderPage = function ReaderPage(props) {
+  var fullStatement = {},
+      lrsToken = null,
+      statementSent = false;
+  (0, _Hooks.useEffect)(function () {
+    (0, _shared.getLRSAuthToken)(LRS_CONNECTION).fork(function (e) {
+      console.warn('error getting token', e);
+    }, function (s) {
+      lrsToken = s;
+      console.log('Got token from the LRS');
+    });
+  }, []);
+
   var onErrorFn = function onErrorFn(err, data) {
     console.warn("Didn't read the code", err, data);
   };
 
   var onReadFn = function onReadFn(data) {
-    console.log("I see the code!", data);
+    console.log("Read code : ", data);
+    fullStatement = Object.assign({}, ACTOR, data);
+    sendCodeStatement();
+  };
+
+  var sendCodeStatement = function sendCodeStatement(_) {
+    if (lrsToken === null) {
+      console.warn("Can't send statement, don't have a token!");
+      return;
+    } else if (statementSent) {
+      console.log('The statement has already been sent!');
+      return;
+    }
+
+    statementSent = true;
+    console.log("Sending statement: ", fullStatement);
+    (0, _LRS.sendStatement)({
+      endpoint: LRS_CONNECTION.statementendpoint,
+      tokentype: (0, _StringUtils.capitalizeFirstLetter)(lrsToken.token_type),
+      token: lrsToken.access_token,
+      version: "1.0.0"
+    }, fullStatement).fork(console.warn, function (success) {
+      console.log("Statement successfully sent! ", success);
+    });
   };
 
   return (0, _Nori.h)(_QrReader.QrReader, {
@@ -53066,7 +55158,7 @@ var ReaderPage = function ReaderPage(props) {
 };
 
 exports.ReaderPage = ReaderPage;
-},{"../nori/Nori":"js/nori/Nori.js","../components/QrReader":"js/components/QrReader.js"}],"../node_modules/@babel/runtime/helpers/taggedTemplateLiteral.js":[function(require,module,exports) {
+},{"../nori/Nori":"js/nori/Nori.js","../nori/Hooks":"js/nori/Hooks.js","../components/QrReader":"js/components/QrReader.js","../learningservices/shared":"js/learningservices/shared.js","../learningservices/lrs/LRS":"js/learningservices/lrs/LRS.js","../nori/util/StringUtils":"js/nori/util/StringUtils.js"}],"../node_modules/@babel/runtime/helpers/taggedTemplateLiteral.js":[function(require,module,exports) {
 function _taggedTemplateLiteral(strings, raw) {
   if (!raw) {
     raw = strings.slice(0);
@@ -54583,16 +56675,13 @@ var _NoriDOM = require("./nori/NoriDOM");
 
 var _ReaderPage = require("./pages/ReaderPage");
 
-var _QrReader = require("./components/QrReader");
-
 var _Global = _interopRequireDefault(require("./theme/Global"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /* @jsx h */
-// render(<ReaderPage/>, document.querySelector('#js-application'));
 (0, _NoriDOM.render)((0, _Nori.h)(_ReaderPage.ReaderPage, null), document.querySelector('#js-application'));
-},{"./nori/Nori":"js/nori/Nori.js","./nori/NoriDOM":"js/nori/NoriDOM.js","./pages/ReaderPage":"js/pages/ReaderPage.js","./components/QrReader":"js/components/QrReader.js","./theme/Global":"js/theme/Global.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./nori/Nori":"js/nori/Nori.js","./nori/NoriDOM":"js/nori/NoriDOM.js","./pages/ReaderPage":"js/pages/ReaderPage.js","./theme/Global":"js/theme/Global.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

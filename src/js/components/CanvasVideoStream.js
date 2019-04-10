@@ -16,18 +16,18 @@ v.addEventListener("resize", ev => {
 }, false);
  */
 
-export const VideoSteam = props => {
-  const FACING_MODE     = 'environment'; // use mobile rear camera
-  const PLAY_INLINE     = true;
-  let loopVideo         = true,
-      currentAnimationRequestId,
+const INTERVAL = 150;
+
+export const CanvasVideoSteam = props => {
+  const FACING_MODE           = 'environment'; // use mobile rear camera
+  const PLAY_INLINE           = true;
+  let intervalID,
       canvasContext,
-      videoEl           = useRef(null),
-      canvasEl          = useRef(null),
-      lastFrame,
+      videoEl                 = useRef(null),
+      canvasEl                = useRef(null),
       {onFrameCallback, play} = props;
 
-  if(play === undefined) {
+  if (play === undefined) {
     play = true;
   }
 
@@ -41,7 +41,7 @@ export const VideoSteam = props => {
       .then(stream => {
         videoEl.current.srcObject = stream;
         videoEl.current.setAttribute("playsinline", PLAY_INLINE); // required to tell iOS safari we don't want fullscreen
-        if(play) {
+        if (play) {
           let autoPlayPromise = videoEl.current.play();
           // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
           if (autoPlayPromise !== undefined) {
@@ -55,18 +55,16 @@ export const VideoSteam = props => {
         } else {
           videoEl.current.pause();
         }
-
-        currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);
+        // intervalID = requestAnimationFrame(handleVideoFrame);
+        intervalID = setTimeout(handleVideoFrame, INTERVAL);
       })
       .catch(err => {
         console.warn('VideoStream error :', err);
       });
 
     return () => {
-      //loopVideo = false;
-      //videoEl.current.pause();
-      cancelAnimationFrame(currentAnimationRequestId);
-      lastFrame = null;
+      //cancelAnimationFrame(intervalID);
+      clearTimeout(intervalID);
     }
   }, []);
 
@@ -77,17 +75,15 @@ export const VideoSteam = props => {
 
       canvasEl.current.width  = vW;
       canvasEl.current.height = vH;
-      lastFrame = videoEl.current;
-      canvasContext.drawImage(lastFrame, 0, 0, vW, vH);
+      canvasContext.drawImage(videoEl.current, 0, 0, vW, vH);
       if (typeof onFrameCallback === 'function') {
         onFrameCallback(canvasEl.current, canvasContext);
       }
-    } else if(!play) {
+    } else if (!play) {
       //
     }
-    if (loopVideo) {
-      currentAnimationRequestId = requestAnimationFrame(handleVideoFrame);
-    }
+    // intervalID = requestAnimationFrame(handleVideoFrame);
+    intervalID = setTimeout(handleVideoFrame, INTERVAL);
   };
 
   return (
