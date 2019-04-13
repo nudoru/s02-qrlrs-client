@@ -64,22 +64,25 @@ const LRS_CONNECTION = {
   version          : "1.0.0"
 };
 
-
+let fullStatement = {},
+    lrsToken      = null;
 
 export const ReaderPage = props => {
 
-  let fullStatement = {},
-      lrsToken      = null,
-      [statementSent, setStatementSent] = [0,0],//useState(false),
+  let [statementSent, setStatementSent] = useState(false),
       [doReload, setDoReload] = useState(false);
 
   useEffect(() => {
-    // getLRSAuthToken(LRS_CONNECTION).fork(e => {
-    //   console.warn('error getting token', e);
-    // }, s => {
-    //   lrsToken = s;
-    //   console.log('Got token from the LRS');
-    // });
+    getLRSAuthToken(LRS_CONNECTION).fork(e => {
+      console.warn('error getting token', e);
+    }, s => {
+      lrsToken = s;
+      console.log('Got token from the LRS');
+    });
+
+    // setTimeout(() => {
+    //   setStatementSent(true);
+    // }, 1000)
   }, []);
 
   const onErrorFn = (err, data) => {
@@ -113,13 +116,11 @@ export const ReaderPage = props => {
     });
 
     setStatementSent(true);
-    // statementSent = true;
   };
 
   const onResetClick = e => {
     console.log('reset to allow new statements to be sent');
     setStatementSent(false);
-    // statementSent = false;
   };
 
   let scannerContents = <div>
@@ -127,7 +128,7 @@ export const ReaderPage = props => {
     <div
       className={pictureFrame}>
       <QrReader onReadCallback={onReadFn} onErrorCallback={onErrorFn}/>
-      {/*<Lister/>*/}
+      {/*<p>Hi!</p>*/}
     </div>
   </div>;
 
@@ -137,7 +138,7 @@ export const ReaderPage = props => {
     <p>{JSON.stringify(fullStatement)}</p>
   </div>;
 
-  let contents = doReload ? scannedContents : scannerContents;
+  let contents = statementSent ? scannedContents : scannerContents;
 
   const onReloadClick = _ =>{
     // console.log('     !!!! reload clicked', doReload, !doReload);
@@ -147,7 +148,6 @@ export const ReaderPage = props => {
   // console.log('     !!!! RELOAD', doReload);
 
   return <div className={absoluteCenter}>
-    <button onClick={onReloadClick} className={bigButton}>Reload</button>
     {contents}
   </div>;
 };

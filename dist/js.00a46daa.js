@@ -41006,12 +41006,14 @@ var useEffect = function useEffect(callbackFn, deps) {
   var changedDeps = !(0, _ramda.equals)(deps, res.hook.data.dependencies);
 
   if (deps === undefined || changedDeps) {
+    // do update if there are no dependants or they changed
     setHookData(res.id, res.cursor, {
       callback: callbackFn,
       dependencies: deps
     });
     (0, _LifecycleQueue.enqueuePostRenderHook)(HOOK_TAGS.EFFECT, res.id, callbackFn);
-  } else if (res.initial || deps.length === 0) {
+  } else if (res.initial || deps.length > 0) {
+    // do update if it's the first render OR there is more than one dependant
     (0, _LifecycleQueue.enqueuePostRenderHook)(HOOK_TAGS.EFFECT, res.id, callbackFn);
   }
 }; // TODO this needs to run right after the component is rendered not after everything renders
@@ -41542,7 +41544,7 @@ exports.unslugify = unslugify;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.removeComponentInstance = exports.reconcileOnly = exports.reconcileTree = exports.getHookCursor = exports.setCurrentVnode = exports.getCurrentVnode = exports.getComponentInstances = exports.cloneNode = void 0;
+exports.removeComponentInstance = exports.reconcileOnly = exports.processTree = exports.reconcileTree = exports.getHookCursor = exports.setCurrentVnode = exports.getCurrentVnode = exports.getComponentInstances = exports.cloneNode = void 0;
 
 var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
 
@@ -41570,8 +41572,8 @@ var _StringUtils = require("./util/StringUtils");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var _componentInstanceMap = {},
-    _sfcInstanceMap = {},
+var _globalNodeIndexCounter = 0,
+    _componentInstanceMap = {},
     _currentVnode,
     _currentVnodeHookCursor = 0,
     _currentContextProvider,
@@ -41636,19 +41638,41 @@ exports.getHookCursor = getHookCursor;
 
 var reconcileTree = function reconcileTree(vnode) {
   _reconciliationDepth = 0;
-  return reconcile(vnode, _reconciliationDepth);
-}; // Need a persistant index because this fn is called at several places
-
+  var result = reconcile(vnode, _reconciliationDepth);
+  processTree(result);
+  return result;
+};
 
 exports.reconcileTree = reconcileTree;
 
+var processTree = function processTree(vnode) {
+  var depth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+  var indent = (0, _StringUtils.repeatStr)('\t', depth);
+
+  if ((0, _typeof2.default)(vnode) === 'object') {
+    console.log(indent, vnode.props.id, vnode);
+  } else {
+    console.log(indent, vnode);
+  }
+
+  if ((0, _typeof2.default)(vnode) === 'object') {
+    vnode.children.forEach(function (child, i) {
+      processTree(child, ++depth);
+    });
+  }
+}; // Need a persistant index because this fn is called at several places
+
+
+exports.processTree = processTree;
+
 var reconcile = function reconcile(vnode) {
-  var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+  var depth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
   vnode = cloneNode(vnode);
   setCurrentVnode(vnode);
-  var indent = (0, _StringUtils.repeatStr)('\t', index); // console.log(indent, index, vnode);
+  _globalNodeIndexCounter++; //let indent = repeatStr('\t', depth);
+  // console.log(indent, depth, vnode);
 
-  if (index <= _currentContextProviderIndex) {
+  if (depth <= _currentContextProviderIndex) {
     _currentContextProvider = null;
   }
 
@@ -41656,16 +41680,16 @@ var reconcile = function reconcile(vnode) {
     vnode = reconcileComponentInstance(vnode);
 
     if (isProvider(vnode)) {
-      if (index > _currentContextProviderIndex) {
+      if (depth > _currentContextProviderIndex) {
         // TODO merge this value w/ the old one
         console.warn("Not handling nested providers yet");
-      } // console.log(indent, `Provider: `,index, _currentContextProviderIndex);
+      } // console.log(indent, `Provider: `,depth, _currentContextProviderIndex);
 
 
       _currentContextProvider = vnode._owner;
-      _currentContextProviderIndex = index;
+      _currentContextProviderIndex = depth;
     } else if (isConsumer(vnode) && _currentContextProvider) {
-      // console.log(indent, `Consumer: `,index, _currentContextProviderIndex);
+      // console.log(indent, `Consumer: `,depth, _currentContextProviderIndex);
       vnode.props.context = _currentContextProvider.value;
 
       _currentContextProvider.addConsumer(vnode);
@@ -41675,17 +41699,17 @@ var reconcile = function reconcile(vnode) {
 
 
     if ((0, _Nori.isTypeFunction)(vnode)) {
-      // console.log(indent,index,'fn node returns a fn', vnode);
-      vnode = reconcile(vnode, index);
+      // console.log(indent,depth,'fn node returns a fn', vnode);
+      vnode = reconcile(vnode, depth);
     }
   } //return reconcileChildren(vnode, reconcile);
 
 
   if (vnode.hasOwnProperty('children') && vnode.children.length) {
-    ++index; //added for context / depth tracking
+    ++depth; //added for context / depth tracking
 
     vnode.children = reconcileChildFunctions(vnode).map(function (v) {
-      return reconcile(v, index);
+      return reconcile(v, depth);
     });
   }
 
@@ -41705,7 +41729,9 @@ var reconcileOnly = function reconcileOnly(id) {
       vnode = reconcileTree(vnode);
     }
 
-    return reconcileChildren(vnode, reconcileOnly(id));
+    var result = reconcileChildren(vnode, reconcileOnly(id)); // processTree(result);
+
+    return result;
   };
 };
 
@@ -41732,10 +41758,6 @@ var reconcileChildFunctions = function reconcileChildFunctions(vnode) {
       return '';
     }
 
-    if ((0, _typeof2.default)(child) === 'object') {
-      child.props.id = child.props.id ? child.props.id : vnode.props.id + ".".concat(i, ".").concat(index++);
-    }
-
     if (typeof child === 'function') {
       // Render fn as child
       var childResult;
@@ -41753,12 +41775,12 @@ var reconcileChildFunctions = function reconcileChildFunctions(vnode) {
       }
 
       childResult = _is.default.array(childResult) ? childResult : [childResult];
-      childResult = childResult.map(function (c, i) {
+      childResult = childResult.map(function (c, k) {
         if ((0, _Nori.isTypeFunction)(c)) {
           c = reconcile(c);
         } else if ((0, _typeof2.default)(c) === 'object' && !getKeyOrId(c)) {
           // TODO Take in to account keys?
-          c.props.id = c.props.id ? c.props.id : vnode.props.id + ".".concat(i, ".").concat(index++);
+          c.props.id = c.props.id ? c.props.id : vnode.props.id + "-".concat(_globalNodeIndexCounter, ".").concat(k, ".").concat(index++);
         }
 
         return c;
@@ -41768,6 +41790,10 @@ var reconcileChildFunctions = function reconcileChildFunctions(vnode) {
     } else if (child.hasOwnProperty('type') && (0, _typeof2.default)(child.type) === 'object') {
       // Occurs when a fn that returns JSX is used as a component in a component
       child = child.type;
+    } else if ((0, _typeof2.default)(child) === 'object') {
+      // TODO put this somewhere else - in reconcileTree
+      // assign IDs if none are present
+      child.props.id = child.props.id ? child.props.id : vnode.props.id + "-".concat(_globalNodeIndexCounter, ".").concat(index++);
     } //Not needed : else {child = reconcile(child);}
 
 
@@ -41831,61 +41857,7 @@ var renderComponent = function renderComponent(instance) {
   }
 
   return null;
-}; // TODO memoize SFCs
-// TODO fix SFC id assignment
-// const renderSFC = instance => {
-//   if (instance && typeof instance === 'object' && !instance.hasOwnProperty('type')) {
-//     console.warn(`renderSFC : This isn't a SFC!`, instance);
-//     return instance;
-//   }
-//
-//   let previousInstanceId = null,
-//       vnodeId;
-//
-//   console.log(`>>>>>> `,instance.props.id, instance);
-//
-//   Object.keys(_sfcInstanceMap).forEach(key => {
-//     let entry = _sfcInstanceMap[key];
-//     if(entry.instance.props.id === instance.props.id) {
-//       console.log(`Matched by existing ID`);
-//       //previousInstanceId = key;
-//     } else if(isEqual(entry.instance.type, instance.type)) {
-//       console.log('The types match!',instance, entry.instance);
-//       if (isEqual(entry.instance, instance)) {
-//         console.log('>> Found a previous matching SFC!', key, entry);
-//         //instance = entry.instance;
-//         previousInstanceId = key;
-//       }
-//     }
-//   });
-//
-//   // Need to assign and ID prior to execution so that hooks can register properly
-//   if (previousInstanceId !== null) {
-//     console.log(previousInstanceId, `found!`, _sfcInstanceMap[previousInstanceId]);
-//     if(!getDidUpdateQueue().includes(previousInstanceId)) {
-//       console.log('NOT in the update list');
-//       return _sfcInstanceMap[previousInstanceId].vnode;
-//     } else {
-//       console.log('SHOULD update! in the update list');
-//     }
-//     vnodeId = previousInstanceId;
-//   } else {
-//     vnodeId = getNextId('sfc');
-//   }
-//
-//   instance.props.id = vnodeId;
-//
-//   console.log(`>> instant sfc with id ${vnodeId}`);
-//
-//   let vnode                = instance.type(instance.props);
-//   vnode.props.id           = vnodeId;
-//   _sfcInstanceMap[vnodeId] = {instance, vnode, props: instance.props};
-//   console.log('>> sto ', vnodeId, _sfcInstanceMap[instance.props.id]);
-//   vnode._owner = instance;
-//
-//   return vnode;
-// };
-
+};
 
 var renderSFC = function renderSFC(instance) {
   if (instance && (0, _typeof2.default)(instance) === 'object' && !instance.hasOwnProperty('type')) {
@@ -41909,7 +41881,7 @@ var renderSFC = function renderSFC(instance) {
 
 
 var removeComponentInstance = function removeComponentInstance(vnode) {
-  //console.log(`remove `,typeof vnode, vnode);
+  // console.log(`remove `,typeof vnode, vnode);
   if ((0, _typeof2.default)(vnode) !== 'object') {
     return;
   }
@@ -42524,7 +42496,7 @@ var applyEvents = function applyEvents(vnode, $element) {
 
 
   marshalEventProps(props).forEach(function (evt) {
-    var nodeId = vnode.props.id; //console.log(nodeId, 'apply events',evt.event, vnode, $element);
+    var nodeId = vnode.props.id; // console.log(nodeId, 'apply events',evt.event, vnode, $element);
     // if(evt.event === 'input') {
     //   // Auto debounce?
     // }
@@ -42886,18 +42858,18 @@ var performUpdates = function performUpdates() {
   if (isRendering()) {
     console.warn(">>> Update called while rendering");
     return;
-  } // console.time('update');
-
+  }
 
   clearTimeout(_updateTimeOutID);
   _updateTimeOutID = null;
   _currentStage = STAGE_RENDERING;
-  var currentVdom = getCurrentVDOM(); // TODO put in a box and map
-
-  var updatedVDOMTree = (0, _LifecycleQueue.getDidUpdateQueue)().reduce(function (acc, id) {
+  var currentVdom = getCurrentVDOM();
+  var updatedNodes = (0, _LifecycleQueue.getDidUpdateQueue)();
+  var updatedVDOMTree = updatedNodes.reduce(function (acc, id) {
     acc = (0, _Reconciler.reconcileOnly)(id)(acc);
     return acc;
   }, currentVdom);
+  (0, _Reconciler.processTree)(updatedVDOMTree);
   (0, _NoriDOM.patch)(currentVdom)(updatedVDOMTree);
   setCurrentVDOM(updatedVDOMTree);
   (0, _LifecycleQueue.performDidMountQueue)();
@@ -57186,23 +57158,28 @@ var LRS_CONNECTION = {
   secret: "eaf5a4c46d1f9f",
   version: "1.0.0"
 };
+var fullStatement = {},
+    lrsToken = null;
 
 var ReaderPage = function ReaderPage(props) {
-  var fullStatement = {},
-      lrsToken = null,
-      statementSent = 0,
-      setStatementSent = 0,
-      _useState = (0, _Hooks.useState)(false),
+  var _useState = (0, _Hooks.useState)(false),
       _useState2 = (0, _slicedToArray2.default)(_useState, 2),
-      doReload = _useState2[0],
-      setDoReload = _useState2[1];
+      statementSent = _useState2[0],
+      setStatementSent = _useState2[1],
+      _useState3 = (0, _Hooks.useState)(false),
+      _useState4 = (0, _slicedToArray2.default)(_useState3, 2),
+      doReload = _useState4[0],
+      setDoReload = _useState4[1];
 
-  (0, _Hooks.useEffect)(function () {// getLRSAuthToken(LRS_CONNECTION).fork(e => {
-    //   console.warn('error getting token', e);
-    // }, s => {
-    //   lrsToken = s;
-    //   console.log('Got token from the LRS');
-    // });
+  (0, _Hooks.useEffect)(function () {
+    (0, _shared.getLRSAuthToken)(LRS_CONNECTION).fork(function (e) {
+      console.warn('error getting token', e);
+    }, function (s) {
+      lrsToken = s;
+      console.log('Got token from the LRS');
+    }); // setTimeout(() => {
+    //   setStatementSent(true);
+    // }, 1000)
   }, []);
 
   var onErrorFn = function onErrorFn(err, data) {
@@ -57233,12 +57210,12 @@ var ReaderPage = function ReaderPage(props) {
     }, fullStatement).fork(console.warn, function (success) {
       console.log("Statement successfully sent! ", success);
     });
-    setStatementSent(true); // statementSent = true;
+    setStatementSent(true);
   };
 
   var onResetClick = function onResetClick(e) {
     console.log('reset to allow new statements to be sent');
-    setStatementSent(false); // statementSent = false;
+    setStatementSent(false);
   };
 
   var scannerContents = (0, _Nori.h)("div", null, (0, _Nori.h)("h3", null, "Scan a code"), (0, _Nori.h)("div", {
@@ -57253,7 +57230,7 @@ var ReaderPage = function ReaderPage(props) {
     onClick: onResetClick,
     className: bigButton
   }, "Scan another one"), (0, _Nori.h)("p", null, JSON.stringify(fullStatement)));
-  var contents = doReload ? scannedContents : scannerContents;
+  var contents = statementSent ? scannedContents : scannerContents;
 
   var onReloadClick = function onReloadClick(_) {
     // console.log('     !!!! reload clicked', doReload, !doReload);
@@ -57263,10 +57240,7 @@ var ReaderPage = function ReaderPage(props) {
 
   return (0, _Nori.h)("div", {
     className: absoluteCenter
-  }, (0, _Nori.h)("button", {
-    onClick: onReloadClick,
-    className: bigButton
-  }, "Reload"), contents);
+  }, contents);
 };
 
 exports.ReaderPage = ReaderPage;

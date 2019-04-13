@@ -141,12 +141,14 @@ export const useEffect = (callbackFn, deps) => {
   });
   const changedDeps = !equals(deps, res.hook.data.dependencies);
   if (deps === undefined || changedDeps) {
+    // do update if there are no dependants or they changed
     setHookData(res.id, res.cursor, {
       callback    : callbackFn,
       dependencies: deps
     });
     enqueuePostRenderHook(HOOK_TAGS.EFFECT, res.id, callbackFn);
-  } else if (res.initial || deps.length === 0) {
+  } else if (res.initial || deps.length > 0) {
+    // do update if it's the first render OR there is more than one dependant
     enqueuePostRenderHook(HOOK_TAGS.EFFECT, res.id, callbackFn);
   }
 };

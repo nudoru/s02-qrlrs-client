@@ -40,7 +40,7 @@ import {patch} from './NoriDOM';
 import NoriComponent from "./NoriComponent";
 import {
   cloneNode,
-  getComponentInstances,
+  getComponentInstances, processTree,
   reconcileOnly, reconcileTree
 } from "./Reconciler";
 
@@ -117,16 +117,16 @@ const performUpdates = () => {
     console.warn(`>>> Update called while rendering`);
     return;
   }
-  // console.time('update');
   clearTimeout(_updateTimeOutID);
   _updateTimeOutID      = null;
   _currentStage         = STAGE_RENDERING;
   const currentVdom     = getCurrentVDOM();
-  // TODO put in a box and map
-  const updatedVDOMTree = getDidUpdateQueue().reduce((acc, id) => {
+  const updatedNodes = getDidUpdateQueue();
+  const updatedVDOMTree = updatedNodes.reduce((acc, id) => {
     acc = reconcileOnly(id)(acc);
     return acc;
   }, currentVdom);
+  processTree(updatedVDOMTree);
   patch(currentVdom)(updatedVDOMTree);
   setCurrentVDOM(updatedVDOMTree);
   performDidMountQueue();

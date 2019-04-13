@@ -193,7 +193,6 @@ const createTextNode = string => document.createTextNode(string);
 //------------------------------------------------------------------------------
 
 const applyEvents = (vnode, $element) => {
-
   const props = vnode.props || {};
   if(Object.keys(props).length === 0) {
     return;
@@ -201,7 +200,7 @@ const applyEvents = (vnode, $element) => {
   // removeEvents(vnode.props.id);
   marshalEventProps(props).forEach(evt => {
     const nodeId = vnode.props.id;
-    //console.log(nodeId, 'apply events',evt.event, vnode, $element);
+    // console.log(nodeId, 'apply events',evt.event, vnode, $element);
     // if(evt.event === 'input') {
     //   // Auto debounce?
     // }
