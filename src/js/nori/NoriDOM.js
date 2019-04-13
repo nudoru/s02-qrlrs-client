@@ -4,6 +4,7 @@ import {renderVDOM} from "./Nori";
 import {removeComponentInstance} from './Reconciler';
 import {removeAllElements} from "./browser/DOMToolbox";
 import is from './util/is';
+import * as _ from 'lodash';
 
 const ID_KEY        = 'data-nori-id';
 const SHOW_ID_KEYS  = true;
@@ -32,11 +33,14 @@ export const render = (component, hostNode) => {
 export const patch = currentvdom => newvdom => {
   let patches = [];
   paint(_$documentHostNode, newvdom, currentvdom, 0, patches);
+  // console.log(patches);
   return patches;
 };
 
 // Affect the DOM
 const paint = ($element, newvdom, currentvdom, index = 0, patches) => {
+  //console.log('EVAL', currentvdom, newvdom);
+  //console.log('diff',objDiff(currentvdom, newvdom));
   if (newvdom && is.undef(currentvdom)) {
     const $newElement = createDOMNode(newvdom);
     $element.appendChild($newElement);
@@ -52,9 +56,7 @@ const paint = ($element, newvdom, currentvdom, index = 0, patches) => {
     if ($toRemove && $toRemove.parentNode === $element) {
       // console.log('Remove', currentvdom, $toRemove);
       removeComponentInstance(currentvdom);
-      // if (currentvdom.hasOwnProperty('props')) {
-      //   removeEvents(currentvdom.props.id); // This is done in removeComponentInstance
-      // }
+      removeAllElements($element.childNodes[index]);
       $element.removeChild($toRemove);
       if (currentvdom.hasOwnProperty('props')) {
         delete _renderedElementsMap[currentvdom.props.id];
@@ -78,6 +80,7 @@ const paint = ($element, newvdom, currentvdom, index = 0, patches) => {
     //, $newElement,$element.childNodes[index]
     // console.log('Replace', currentvdom,'vs',newvdom, $element.childNodes[index],'with',$newElement);
     removeComponentInstance(currentvdom);
+    removeAllElements($element.childNodes[index]);
     $element.replaceChild($newElement, $element.childNodes[index]);
     patches.push({
       type   : 'REPLACE',
@@ -86,6 +89,8 @@ const paint = ($element, newvdom, currentvdom, index = 0, patches) => {
       parent : $element,
       vnode  : newvdom
     });
+  } else if(Object.is(newvdom, currentvdom)) {
+    // console.log('these are equal!', currentvdom);
   } else if (newvdom.type) {
     // If it's a component, iterate over children
     updateProps(
@@ -93,13 +98,31 @@ const paint = ($element, newvdom, currentvdom, index = 0, patches) => {
       newvdom.props,
       currentvdom.props
     );
+    // Reapplying the events fixes issues were handlers held on to values captured
+    // in the component prior to the most recent update. Captured by closure.
+    removeEvents(newvdom.props.id);
+    applyEvents(newvdom, $element.childNodes[index]);
     const newLength = newvdom.children.length;
     const oldLength = currentvdom.children.length;
     const len       = Math.max(newLength, oldLength);
     for (let i = 0; i < len; i++) {
       paint($element.childNodes[index], newvdom.children[i], currentvdom.children[i], i, patches);
     }
+  } else {
+    console.log('Wow, nothing to do!', currentvdom, newvdom);
   }
+};
+
+// https://gist.github.com/Yimiprod/7ee176597fef230d1451
+const objDiff = (object, base) => {
+  function changes(object, base) {
+    return _.transform(object, function(result, value, key) {
+      if (!_.isEqual(value, base[key])) {
+        result[key] = (_.isObject(value) && _.isObject(base[key])) ? changes(value, base[key]) : value;
+      }
+    });
+  }
+  return changes(object, base);
 };
 
 const changed = (newNode, oldNode) => {
@@ -127,6 +150,10 @@ const createDOMNode = vnode => {
   if (typeof vnode === 'string' || typeof vnode === 'number') {
     $element = createTextNode(vnode);
   } else if (typeof vnode === 'object' && typeof vnode.type === 'string') {
+    if(!vnode.props.id) {
+      console.warn(`createDOMNode : Node doesn't have an id!`,vnode);
+    }
+
     $element = document.createElement(vnode.type);
     if (vnode.hasOwnProperty('children')) {
       vnode.children
@@ -166,9 +193,15 @@ const createTextNode = string => document.createTextNode(string);
 //------------------------------------------------------------------------------
 
 const applyEvents = (vnode, $element) => {
+
   const props = vnode.props || {};
+  if(Object.keys(props).length === 0) {
+    return;
+  }
+  // removeEvents(vnode.props.id);
   marshalEventProps(props).forEach(evt => {
     const nodeId = vnode.props.id;
+    //console.log(nodeId, 'apply events',evt.event, vnode, $element);
     // if(evt.event === 'input') {
     //   // Auto debounce?
     // }
@@ -195,7 +228,10 @@ const marshalEventProps = props => Object.keys(props).reduce((acc, key) => {
   return acc;
 }, []);
 
-const internalEventHandler = (evt, vnode, $element) => e => evt.componentEventHandler(createProxyEventObject(e, vnode, $element));
+const internalEventHandler = (evt, vnode, $element) => e => {
+  //console.log('internalEventHandler',e, evt, vnode, $element);
+  return evt.componentEventHandler(createProxyEventObject(e, vnode, $element));
+};
 
 const createProxyEventObject = (event, vnode, $element = null) => ({
   event,
@@ -204,6 +240,7 @@ const createProxyEventObject = (event, vnode, $element = null) => ({
 });
 
 export const removeEvents = id => {
+  // console.log('remove events from',id);
   if (_eventMap.hasOwnProperty(id)) {
     _eventMap[id].map(fn => {
       fn();
@@ -220,7 +257,11 @@ export const removeEvents = id => {
 const updateProps = ($element, newProps, oldProps = {}) => {
   const props = Object.assign({}, newProps, oldProps);
   Object.keys(props).forEach(key => {
-    updateProp($element, key, newProps[key], oldProps[key]);
+    if(key.indexOf('on') === 0) {
+      //console.log('Event prop!',$element, key, newProps[key], oldProps[key]);
+    } else {
+      updateProp($element, key, newProps[key], oldProps[key]);
+    }
   });
 };
 
@@ -255,7 +296,7 @@ const applyProp = ($element, key, value) => {
       }
       key = 'id';
     } else if (key === 'ref') {
-      // This doesn't work because the vnodes are cloned so obj pass by reference is broken
+      // console.log(key,value,$element);
       if(typeof value === 'object') {
         value.current = $element;
       } else if (typeof value === 'function') {

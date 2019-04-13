@@ -42,18 +42,28 @@ const registerHook = (type, value) => {
   }
   const id = cVnode.props.id;
 
+  if(!id) {
+    console.warn(`Can't register a hook with no id! `, cVnode);
+    return;
+  }
+
+  // console.log(`Register hook`,id,type,value);
+
   if (!_hooksMap.hasOwnProperty(id)) {
     _hooksMap[id] = [];
   }
   if (!_hooksMap[id][cursor]) {
     initial = true;
     _hooksMap[id].push({type, vnode: cVnode, data: value});
-    //console.log(`NEW hook ${type} for ${id} at ${cursor}`, value);
+    // console.log(`NEW hook ${type} for ${id} at ${cursor}`, value);
   }
+  // console.log('get hook data', getHookData(id, cursor));
+
   return {initial, id, cursor, hook: _hooksMap[id][cursor]};
 };
 
 const setHookData = (id, cursor, data) => {
+  // console.log(`set hook data`,id, cursor, data);
   _hooksMap[id][cursor].data = data;
 };
 
@@ -79,18 +89,24 @@ export const unregisterHooks = (id) => {
 export const useState = initialState => {
   // Returning the action from the reducer because the argument of the setState() fn
   // is expected to be the new state, not the action as in the case of useReducer's dispatch() fn
-  const [currentState, dispatch] = useReducer((state, action) => action, initialState);
+  const [currentState, dispatch] = useReducer((state, action) => {
+    // console.log(`useState reducer`,state, action);
+    return action
+  }, initialState);
+  // console.log(`useState, curent is `, currentState);
   return [currentState, dispatch];
 };
 
 export const useReducer = (reduceFn, initialState) => {
   const res          = registerHook('useReducer', initialState);
-  const currentState = res.hook.data;
+  const currentState = getHookData(res.id, res.cursor);//res.hook.data;
   const dispatch     = action => {
     const newState = reduceFn(getHookData(res.id, res.cursor), action);
+    // console.log('in reducer, new state is', newState);
     setHookData(res.id, res.cursor, newState);
     enqueueUpdate(res.id);
   };
+  // console.log(`useReducer, curent is `, currentState);
   return [currentState, dispatch];
 };
 

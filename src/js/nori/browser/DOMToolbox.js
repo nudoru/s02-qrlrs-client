@@ -71,6 +71,7 @@ export const offset = el => {
 
 export const removeAllElements = el => {
   while (el.firstChild) {
+    removeAllElements(el.firstChild);
     el.removeChild(el.firstChild);
   }
 };

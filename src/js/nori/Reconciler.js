@@ -2,14 +2,15 @@ import {compose} from "ramda";
 import Is from "./util/is";
 import {getNextId} from "./util/ElementIDCreator";
 import {isNori, isNoriComponent, isTypeFunction} from "./Nori";
-import {cloneDeep} from "lodash";
-import {performPostRenderHookCleanup} from "./LifecycleQueue";
+import {cloneDeep, isEqual} from "lodash";
+import {getDidUpdateQueue, performPostRenderHookCleanup} from "./LifecycleQueue";
 import {removeEvents} from "./NoriDOM";
 import {unregisterHooks} from "./Hooks";
 import {Consumer, Provider} from './Context';
 import {repeatStr} from "./util/StringUtils";
 
 let _componentInstanceMap        = {},
+    _sfcInstanceMap              = {},
     _currentVnode,
     _currentVnodeHookCursor      = 0,
     _currentContextProvider,
@@ -40,9 +41,10 @@ export const reconcileTree = vnode => {
 
 // Need a persistant index because this fn is called at several places
 const reconcile = (vnode, index = 0) => {
+  vnode = cloneNode(vnode);
   setCurrentVnode(vnode);
-  let indent = repeatStr('\t',index);
-  //console.log(indent,index,vnode);
+  let indent = repeatStr('\t', index);
+  // console.log(indent, index, vnode);
   if (index <= _currentContextProviderIndex) {
     _currentContextProvider = null;
   }
@@ -65,8 +67,8 @@ const reconcile = (vnode, index = 0) => {
     }
 
     // TODO this needs more testing
-    if(isTypeFunction(vnode)) {
-      console.log(indent,index,'fn node returns a fn', vnode);
+    if (isTypeFunction(vnode)) {
+      // console.log(indent,index,'fn node returns a fn', vnode);
       vnode = reconcile(vnode, index)
     }
   }
@@ -110,9 +112,16 @@ const reconcileChildFunctions = vnode => {
       resultIndex = [],
       index       = 0;
   children        = children.map((child, i) => {
-    if(child === null || child === undefined) {
+
+    if (child === null || child === undefined) {
       return '';
-    } else if (typeof child === 'function') {
+    }
+
+    if(typeof child === 'object') {
+      child.props.id = child.props.id ? child.props.id : vnode.props.id + `.${i}.${index++}`;
+    }
+
+    if (typeof child === 'function') {
       // Render fn as child
       let childResult;
       try {
@@ -196,21 +205,90 @@ const renderComponent = instance => {
   return null;
 };
 
+// TODO memoize SFCs
+// TODO fix SFC id assignment
+// const renderSFC = instance => {
+//   if (instance && typeof instance === 'object' && !instance.hasOwnProperty('type')) {
+//     console.warn(`renderSFC : This isn't a SFC!`, instance);
+//     return instance;
+//   }
+//
+//   let previousInstanceId = null,
+//       vnodeId;
+//
+//   console.log(`>>>>>> `,instance.props.id, instance);
+//
+//   Object.keys(_sfcInstanceMap).forEach(key => {
+//     let entry = _sfcInstanceMap[key];
+//     if(entry.instance.props.id === instance.props.id) {
+//       console.log(`Matched by existing ID`);
+//       //previousInstanceId = key;
+//     } else if(isEqual(entry.instance.type, instance.type)) {
+//       console.log('The types match!',instance, entry.instance);
+//       if (isEqual(entry.instance, instance)) {
+//         console.log('>> Found a previous matching SFC!', key, entry);
+//         //instance = entry.instance;
+//         previousInstanceId = key;
+//       }
+//     }
+//   });
+//
+//   // Need to assign and ID prior to execution so that hooks can register properly
+//   if (previousInstanceId !== null) {
+//     console.log(previousInstanceId, `found!`, _sfcInstanceMap[previousInstanceId]);
+//     if(!getDidUpdateQueue().includes(previousInstanceId)) {
+//       console.log('NOT in the update list');
+//       return _sfcInstanceMap[previousInstanceId].vnode;
+//     } else {
+//       console.log('SHOULD update! in the update list');
+//     }
+//     vnodeId = previousInstanceId;
+//   } else {
+//     vnodeId = getNextId('sfc');
+//   }
+//
+//   instance.props.id = vnodeId;
+//
+//   console.log(`>> instant sfc with id ${vnodeId}`);
+//
+//   let vnode                = instance.type(instance.props);
+//   vnode.props.id           = vnodeId;
+//   _sfcInstanceMap[vnodeId] = {instance, vnode, props: instance.props};
+//   console.log('>> sto ', vnodeId, _sfcInstanceMap[instance.props.id]);
+//   vnode._owner = instance;
+//
+//   return vnode;
+// };
+
+
 const renderSFC = instance => {
   if (instance && typeof instance === 'object' && !instance.hasOwnProperty('type')) {
     console.warn(`renderSFC : This isn't a SFC!`, instance);
     return instance;
   }
-  let vnode = instance.type(instance.props);
-  if (!vnode.props.id) {
-    vnode.props.id = instance.props.key ? '' + instance.props.key : instance.props.id;
+
+  if (!instance.props.id) {
+    instance.props.id = instance.props.key ? '' + instance.props.key : getNextId('sfc');
   }
+
+  let vnode = instance.type(instance.props);
+
+  if (!vnode.props.id) {
+    vnode.props.id = instance.props.id;
+  }
+
   vnode._owner = instance;
   return vnode;
 };
 
 // NoriDOM update() on when an element isn't in the new vdom tree
 export const removeComponentInstance = vnode => {
+  //console.log(`remove `,typeof vnode, vnode);
+
+  if(typeof vnode !== 'object') {
+    return;
+  }
+
   const id = getKeyOrId(vnode);
 
   performPostRenderHookCleanup(id);
@@ -225,6 +303,12 @@ export const removeComponentInstance = vnode => {
       compInst.remove();
     }
     delete _componentInstanceMap[id];
+  }
+
+  if(vnode.hasOwnProperty('children')) {
+    vnode.children.forEach(child => {
+      removeComponentInstance(child);
+    });
   }
 };
 

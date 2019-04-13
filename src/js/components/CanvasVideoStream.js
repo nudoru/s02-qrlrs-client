@@ -2,6 +2,12 @@
 
 import {h} from "../nori/Nori";
 import {useEffect, useRef} from "../nori/Hooks";
+import {css} from 'emotion';
+
+const videoStream = css`
+  width: 320px;
+  height: 240px;
+`;
 
 /*
 Handle resize?
@@ -16,13 +22,14 @@ v.addEventListener("resize", ev => {
 }, false);
  */
 
-const INTERVAL = 150;
+const INTERVAL = (1000/10);
 
 export const CanvasVideoSteam = props => {
   const FACING_MODE           = 'environment'; // use mobile rear camera
   const PLAY_INLINE           = true;
   let intervalID,
       canvasContext,
+      mediaStream,
       videoEl                 = useRef(null),
       canvasEl                = useRef(null),
       {onFrameCallback, play} = props;
@@ -32,17 +39,18 @@ export const CanvasVideoSteam = props => {
   }
 
   useEffect(() => {
-    canvasContext = canvasEl.current.getContext('2d');
+    canvasContext = canvasEl.getContext('2d');
 
     navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {facingMode: FACING_MODE}
     })
       .then(stream => {
-        videoEl.current.srcObject = stream;
-        videoEl.current.setAttribute("playsinline", PLAY_INLINE); // required to tell iOS safari we don't want fullscreen
+        mediaStream = stream;
+        videoEl.srcObject = mediaStream;
+        videoEl.setAttribute("playsinline", PLAY_INLINE); // required to tell iOS safari we don't want fullscreen
         if (play) {
-          let autoPlayPromise = videoEl.current.play();
+          let autoPlayPromise = videoEl.play();
           // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
           if (autoPlayPromise !== undefined) {
             autoPlayPromise.then(_ => {
@@ -53,7 +61,7 @@ export const CanvasVideoSteam = props => {
             });
           }
         } else {
-          videoEl.current.pause();
+          videoEl.pause();
         }
         // intervalID = requestAnimationFrame(handleVideoFrame);
         intervalID = setTimeout(handleVideoFrame, INTERVAL);
@@ -63,21 +71,27 @@ export const CanvasVideoSteam = props => {
       });
 
     return () => {
+      console.log('unloading video');
       //cancelAnimationFrame(intervalID);
+      try {
+        mediaStream.getTracks()[0].stop();
+      } catch(e) {
+        console.error(`CanvasVideoStream : Error stopping video track,`,e);
+      }
       clearTimeout(intervalID);
     }
   }, []);
 
   const handleVideoFrame = _ => {
-    if (videoEl.current.readyState === videoEl.current.HAVE_ENOUGH_DATA && play) {
-      let vW = videoEl.current.videoWidth,
-          vH = videoEl.current.videoHeight;
+    if (videoEl.readyState === videoEl.HAVE_ENOUGH_DATA && play) {
+      let vW = videoEl.videoWidth,
+          vH = videoEl.videoHeight;
 
-      canvasEl.current.width  = vW;
-      canvasEl.current.height = vH;
-      canvasContext.drawImage(videoEl.current, 0, 0, vW, vH);
+      canvasEl.width  = vW;
+      canvasEl.height = vH;
+      canvasContext.drawImage(videoEl, 0, 0, vW, vH);
       if (typeof onFrameCallback === 'function') {
-        onFrameCallback(canvasEl.current, canvasContext);
+        onFrameCallback(canvasEl, canvasContext);
       }
     } else if (!play) {
       //
@@ -88,8 +102,8 @@ export const CanvasVideoSteam = props => {
 
   return (
     <div>
-      <video ref={videoEl} hidden/>
-      <canvas ref={canvasEl}/>
+      <video className={videoStream} ref={el => videoEl = el} hidden/>
+      <canvas className={videoStream} ref={el => canvasEl = el}/>
     </div>
   );
 };

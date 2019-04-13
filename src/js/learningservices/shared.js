@@ -156,7 +156,6 @@ const getLRSAuthToken = (wsOptions) =>
     };
 
     let url = wsOptions.authendpoint + parameterize(params);
-    console.log(url);
 
     fetch(url, {
       method : 'POST',

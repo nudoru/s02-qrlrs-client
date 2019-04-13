@@ -1,0 +1,57 @@
+{
+"verb": {
+      "display": {
+        "en-US": "consumed"
+      },
+      "id": "http://adlnet.gov/expapi/verbs/consumed"
+    },
+    "object": {
+      "id": "https://nudoru.com/beverage/coffee",
+      "definition": {
+        "type": "http://adlnet.gov/expapi/food/coffee",
+        "name": {
+          "en-US": "Coffee"
+        }
+      },
+      "objectType": "Activity"
+    }
+  }
+
+{
+"verb": {
+      "display": {
+        "en-US": "consumed"
+      },
+      "id": "http://adlnet.gov/expapi/verbs/consumed"
+    },
+    "object": {
+      "id": "https://nudoru.com/beverage/water",
+      "definition": {
+        "type": "http://adlnet.gov/expapi/food/water",
+        "name": {
+          "en-US": "Water"
+        }
+      },
+      "objectType": "Activity"
+    }
+  }
+
+
+{
+"verb": {
+      "display": {
+        "en-US": "started"
+      },
+      "id": "http://adlnet.gov/expapi/verbs/started"
+    },
+    "object": {
+      "id": "https://nudoru.com/task/work",
+      "definition": {
+        "type": "http://adlnet.gov/expapi/task/work",
+        "name": {
+          "en-US": "Work"
+        }
+      },
+      "objectType": "Activity"
+    }
+  }
