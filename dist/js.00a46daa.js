@@ -41544,7 +41544,7 @@ exports.unslugify = unslugify;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.removeComponentInstance = exports.reconcileOnly = exports.processTree = exports.reconcileTree = exports.getHookCursor = exports.setCurrentVnode = exports.getCurrentVnode = exports.getComponentInstances = exports.cloneNode = void 0;
+exports.removeComponentInstance = exports.reconcileUpdates = exports.processTree = exports.reconcileTree = exports.getHookCursor = exports.setCurrentVnode = exports.getCurrentVnode = exports.getComponentInstances = exports.cloneNode = void 0;
 
 var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
 
@@ -41716,6 +41716,17 @@ var reconcile = function reconcile(vnode) {
   return vnode;
 };
 
+var reconcileUpdates = function reconcileUpdates(updateIDArray, currentVdom) {
+  var results = updateIDArray.reduce(function (acc, id) {
+    acc = reconcileOnly(id)(acc);
+    return acc;
+  }, currentVdom);
+  processTree(results);
+  return results;
+};
+
+exports.reconcileUpdates = reconcileUpdates;
+
 var reconcileOnly = function reconcileOnly(id) {
   return function (vnode) {
     vnode = cloneNode(vnode);
@@ -41729,13 +41740,10 @@ var reconcileOnly = function reconcileOnly(id) {
       vnode = reconcileTree(vnode);
     }
 
-    var result = reconcileChildren(vnode, reconcileOnly(id)); // processTree(result);
-
+    var result = reconcileChildren(vnode, reconcileOnly(id));
     return result;
   };
 };
-
-exports.reconcileOnly = reconcileOnly;
 
 var reconcileChildren = function reconcileChildren(vnode, mapper) {
   if (vnode.hasOwnProperty('children') && vnode.children.length) {
@@ -42692,12 +42700,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /*
 TODO
   - Catch state setter during construction or initial render and don't update or rerender
-  - HOOKS
-    - move hooks to new files
-    - how to separate currentVnode cursor
-    - use hooks outside of render?
-    - use hooks in SFC?
-  - update lister with my usestate as a test
   - test render props pattern https://www.robinwieruch.de/react-render-props-pattern/
   - use this list to preinit common tags? https://www.npmjs.com/package/html-tags
     - ex: https://github.com/alex-milanov/vdom-prototype/blob/master/src/js/util/vdom.js#L190
@@ -42707,11 +42709,8 @@ TODO
   - update props
   - memo components
   - pure components - no update if state didn't change
-  - context?
-  - refs?
   - spinner https://github.com/davidhu2000/react-spinners/blob/master/src/BarLoader.jsx
   - create a fn that will determine if the vnode has been rendered and call render or update as appropriate
-  - test form input
   - Element or wrapper for text nodes?
   - use ImmutableJS data structures
   - test fn as prop value
@@ -42864,12 +42863,7 @@ var performUpdates = function performUpdates() {
   _updateTimeOutID = null;
   _currentStage = STAGE_RENDERING;
   var currentVdom = getCurrentVDOM();
-  var updatedNodes = (0, _LifecycleQueue.getDidUpdateQueue)();
-  var updatedVDOMTree = updatedNodes.reduce(function (acc, id) {
-    acc = (0, _Reconciler.reconcileOnly)(id)(acc);
-    return acc;
-  }, currentVdom);
-  (0, _Reconciler.processTree)(updatedVDOMTree);
+  var updatedVDOMTree = (0, _Reconciler.reconcileUpdates)((0, _LifecycleQueue.getDidUpdateQueue)(), currentVdom);
   (0, _NoriDOM.patch)(currentVdom)(updatedVDOMTree);
   setCurrentVDOM(updatedVDOMTree);
   (0, _LifecycleQueue.performDidMountQueue)();

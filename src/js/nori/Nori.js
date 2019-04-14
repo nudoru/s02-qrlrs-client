@@ -1,12 +1,6 @@
 /*
 TODO
   - Catch state setter during construction or initial render and don't update or rerender
-  - HOOKS
-    - move hooks to new files
-    - how to separate currentVnode cursor
-    - use hooks outside of render?
-    - use hooks in SFC?
-  - update lister with my usestate as a test
   - test render props pattern https://www.robinwieruch.de/react-render-props-pattern/
   - use this list to preinit common tags? https://www.npmjs.com/package/html-tags
     - ex: https://github.com/alex-milanov/vdom-prototype/blob/master/src/js/util/vdom.js#L190
@@ -16,11 +10,8 @@ TODO
   - update props
   - memo components
   - pure components - no update if state didn't change
-  - context?
-  - refs?
   - spinner https://github.com/davidhu2000/react-spinners/blob/master/src/BarLoader.jsx
   - create a fn that will determine if the vnode has been rendered and call render or update as appropriate
-  - test form input
   - Element or wrapper for text nodes?
   - use ImmutableJS data structures
   - test fn as prop value
@@ -40,8 +31,7 @@ import {patch} from './NoriDOM';
 import NoriComponent from "./NoriComponent";
 import {
   cloneNode,
-  getComponentInstances, processTree,
-  reconcileOnly, reconcileTree
+  getComponentInstances, reconcileTree, reconcileUpdates
 } from "./Reconciler";
 
 const STAGE_UNITIALIZED = 'uninitialized';
@@ -121,12 +111,7 @@ const performUpdates = () => {
   _updateTimeOutID      = null;
   _currentStage         = STAGE_RENDERING;
   const currentVdom     = getCurrentVDOM();
-  const updatedNodes = getDidUpdateQueue();
-  const updatedVDOMTree = updatedNodes.reduce((acc, id) => {
-    acc = reconcileOnly(id)(acc);
-    return acc;
-  }, currentVdom);
-  processTree(updatedVDOMTree);
+  const updatedVDOMTree = reconcileUpdates(getDidUpdateQueue(), currentVdom);
   patch(currentVdom)(updatedVDOMTree);
   setCurrentVDOM(updatedVDOMTree);
   performDidMountQueue();

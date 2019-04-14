@@ -101,7 +101,17 @@ const reconcile = (vnode, depth = 0) => {
   return vnode;
 };
 
-export const reconcileOnly = id => vnode => {
+export const reconcileUpdates = (updateIDArray, currentVdom) => {
+  const results = updateIDArray.reduce((acc, id) => {
+    acc = reconcileOnly(id)(acc);
+    return acc;
+  }, currentVdom);
+
+  processTree(results);
+  return results;
+};
+
+const reconcileOnly = id => vnode => {
   vnode = cloneNode(vnode);
   setCurrentVnode(vnode);
   if (hasOwnerComponent(vnode) && vnode.props.id === id) {
@@ -112,7 +122,6 @@ export const reconcileOnly = id => vnode => {
     vnode = reconcileTree(vnode);
   }
   const result = reconcileChildren(vnode, reconcileOnly(id));
-  // processTree(result);
   return result;
 };
 
