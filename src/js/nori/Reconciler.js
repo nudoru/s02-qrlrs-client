@@ -37,11 +37,11 @@ export const getHookCursor         = _ => _currentVnodeHookCursor++;
 export const reconcileTree = vnode => {
   _reconciliationDepth = 0;
   const result         = reconcile(vnode, _reconciliationDepth);
-  processTree(result);
+  // logTree(result);
   return result;
 };
 
-export const processTree = (vnode, depth = 0) => {
+export const logTree = (vnode, depth = 0) => {
   let indent = repeatStr('\t', depth);
   if(typeof vnode === 'object') {
     console.log(indent, vnode.props.id, vnode);
@@ -51,7 +51,7 @@ export const processTree = (vnode, depth = 0) => {
 
   if (typeof vnode === 'object') {
     vnode.children.forEach((child, i) => {
-      processTree(child, ++depth);
+      logTree(child, ++depth);
     });
   }
 };
@@ -107,7 +107,7 @@ export const reconcileUpdates = (updateIDArray, currentVdom) => {
     return acc;
   }, currentVdom);
 
-  processTree(results);
+  // logTree(results);
   return results;
 };
 
